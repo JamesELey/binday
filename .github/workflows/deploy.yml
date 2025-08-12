@@ -18,9 +18,13 @@ jobs:
           php-version: '8.2'
           coverage: none
 
-      - name: Install Composer dependencies
+      - name: Install Composer dependencies (if present)
         run: |
-          composer install --no-dev --prefer-dist --optimize-autoloader
+          if [ -f composer.json ]; then \
+            composer install --no-dev --prefer-dist --optimize-autoloader; \
+          else \
+            echo "composer.json not found, skipping composer install"; \
+          fi
 
       - name: Prepare root index upload
         run: |
