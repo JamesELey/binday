@@ -45,6 +45,8 @@ jobs:
           port: 21
           server-dir: /htdocs/binday/
           local-dir: ./
+          timeout: 600000
+          max-async-operations: 1
           exclude: |
             **/.git*
             **/.github/**
@@ -71,5 +73,7 @@ jobs:
           port: 21
           server-dir: /htdocs/
           local-dir: ./root-upload/
+          timeout: 600000
+          max-async-operations: 1
 
 
