@@ -18,6 +18,10 @@ jobs:
           php-version: '8.2'
           coverage: none
 
+      - name: Remove committed vendor (fresh install)
+        run: |
+          rm -rf vendor || true
+
       - name: Install Composer dependencies (if present)
         run: |
           if [ -f composer.json ]; then \
