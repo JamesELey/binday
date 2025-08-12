@@ -22,6 +22,11 @@ jobs:
         run: |
           composer install --no-dev --prefer-dist --optimize-autoloader
 
+      - name: Prepare root index upload
+        run: |
+          mkdir -p root-upload
+          cp index.php root-upload/index.php
+
       - name: Deploy to Fasthosts via FTPS
         uses: SamKirkland/FTP-Deploy-Action@v4.3.4
         with:
@@ -47,5 +52,16 @@ jobs:
             **/deploy_ftp.ps1
             **/deploy/**
           dangerous-clean-slate: false
+
+      - name: Upload root index.php to /htdocs
+        uses: SamKirkland/FTP-Deploy-Action@v4.3.4
+        with:
+          server: ${{ secrets.FTP_SERVER }}
+          username: ${{ secrets.FTP_USERNAME }}
+          password: ${{ secrets.FTP_PASSWORD }}
+          protocol: ftps
+          port: 21
+          server-dir: /htdocs/
+          local-dir: ./root-upload/
 
 
