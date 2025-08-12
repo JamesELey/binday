@@ -35,6 +35,36 @@ jobs:
           mkdir -p root-upload
           cp index.php root-upload/index.php
 
+      - name: Package app (excluding vendor and cache)
+        run: |
+          zip -r deploy.zip . \
+            -x "**/.git*" "**/.github/**" "**/node_modules/**" \
+               "**/storage/framework/cache/**" "**/storage/framework/sessions/**" \
+               "**/storage/framework/testing/**" "**/storage/logs/**" \
+               "**/tests/**" "**/.env" "**/.env.*" "**/database/*.sqlite"
+
+      - name: Upload deploy artifacts (zip + extractor)
+        uses: SamKirkland/FTP-Deploy-Action@v4.3.4
+        with:
+          server: ${{ secrets.FTP_SERVER }}
+          username: ${{ secrets.FTP_USERNAME }}
+          password: ${{ secrets.FTP_PASSWORD }}
+          protocol: ftps
+          port: 21
+          server-dir: /htdocs/binday/
+          local-dir: ./
+          include: |
+            deploy.zip
+            public/deploy-extract.php
+          exclude: |
+            **/*
+          timeout: 600000
+          max-async-operations: 1
+
+      - name: Trigger server-side extraction
+        run: |
+          curl --fail --silent "http://thebinday.co.uk/binday/public/deploy-extract.php?token=${{ secrets.DEPLOY_TOKEN }}"
+
       - name: Deploy to Fasthosts via FTPS
         uses: SamKirkland/FTP-Deploy-Action@v4.3.4
         with:
@@ -61,6 +91,8 @@ jobs:
             **/database/*.sqlite
             **/deploy_ftp.ps1
             **/deploy/**
+            deploy.zip
+            public/deploy-extract.php
           dangerous-clean-slate: false
 
       - name: Upload root index.php to /htdocs
