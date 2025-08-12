@@ -1,0 +1,1 @@
+# Laravel\n/vendor/\n/node_modules/\n.env\n.env.*\n/public/storage\n/storage/*.key\n/storage/app/*.sqlite\n/storage/logs/*.log\n.phpunit.result.cache\n/build/\n.DS_Store\nThumbs.db\n
