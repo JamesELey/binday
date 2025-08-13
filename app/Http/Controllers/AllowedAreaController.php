@@ -272,40 +272,131 @@ class AllowedAreaController extends Controller
      */
     public function update(Request $request, $id)
     {
-        $request->validate([
-            'name' => 'required|string|max:255',
-            'active' => 'required|boolean'
-        ]);
-        
         $areas = $this->getAllAreas();
-        $updated = false;
+        $areaIndex = null;
         
-        for ($i = 0; $i < count($areas); $i++) {
-            if ($areas[$i]['id'] == $id) {
-                $areas[$i]['name'] = $request->input('name');
-                $areas[$i]['description'] = $request->input('description', '');
-                $areas[$i]['active'] = $request->boolean('active');
-                
-                // Only update postcodes if it's a postcode-based area
-                if ($areas[$i]['type'] === 'postcode') {
-                    $request->validate(['postcodes' => 'required|string']);
-                    $areas[$i]['postcodes'] = $request->input('postcodes');
-                }
-                
-                $updated = true;
+        foreach ($areas as $index => $area) {
+            if ($area['id'] == $id) {
+                $areaIndex = $index;
                 break;
             }
         }
-        
-        if (!$updated) {
-            return redirect()->route('areas.index')
-                ->with('error', 'Area not found');
+
+        if ($areaIndex === null) {
+            if ($request->expectsJson()) {
+                return response()->json(['success' => false, 'message' => 'Area not found'], 404);
+            }
+            return redirect()->route('areas.index')->with('error', 'Area not found');
         }
-        
+
+        $updateType = $request->input('update_type', 'basic');
+
+        switch ($updateType) {
+            case 'coordinates':
+                return $this->updateCoordinates($request, $areas, $areaIndex);
+            
+            case 'postcodes':
+                return $this->updatePostcodes($request, $areas, $areaIndex);
+            
+            case 'convert_to_postcode':
+                return $this->convertToPostcode($request, $areas, $areaIndex);
+            
+            default:
+                return $this->updateBasicInfo($request, $areas, $areaIndex);
+        }
+    }
+
+    /**
+     * Update area coordinates (for map-based areas)
+     */
+    private function updateCoordinates(Request $request, array $areas, int $areaIndex)
+    {
+        $validated = $request->validate([
+            'coordinates' => 'required|array|min:3',
+            'coordinates.*' => 'array|size:2',
+            'coordinates.*.*' => 'numeric'
+        ]);
+
+        $areas[$areaIndex]['coordinates'] = $validated['coordinates'];
+        $areas[$areaIndex]['type'] = 'map';
+        $areas[$areaIndex]['updated_at'] = date('Y-m-d H:i:s');
+
         $this->saveAreas($areas);
-        
-        return redirect()->route('areas.index')
-            ->with('success', 'Allowed area updated successfully!');
+
+        if ($request->expectsJson()) {
+            return response()->json([
+                'success' => true,
+                'message' => 'Polygon coordinates updated successfully',
+                'area' => $areas[$areaIndex]
+            ]);
+        }
+
+        return redirect()->route('areas.index')->with('success', 'Area polygon updated successfully');
+    }
+
+    /**
+     * Update area postcodes
+     */
+    private function updatePostcodes(Request $request, array $areas, int $areaIndex)
+    {
+        $validated = $request->validate([
+            'postcodes' => 'required|string'
+        ]);
+
+        $areas[$areaIndex]['postcodes'] = $validated['postcodes'];
+        $areas[$areaIndex]['updated_at'] = date('Y-m-d H:i:s');
+
+        $this->saveAreas($areas);
+
+        return redirect()->route('areas.index')->with('success', 'Area postcodes updated successfully');
+    }
+
+    /**
+     * Convert map area to postcode area
+     */
+    private function convertToPostcode(Request $request, array $areas, int $areaIndex)
+    {
+        $validated = $request->validate([
+            'postcodes' => 'required|string'
+        ]);
+
+        $areas[$areaIndex]['type'] = 'postcode';
+        $areas[$areaIndex]['postcodes'] = $validated['postcodes'];
+        $areas[$areaIndex]['coordinates'] = null;
+        $areas[$areaIndex]['updated_at'] = date('Y-m-d H:i:s');
+
+        $this->saveAreas($areas);
+
+        if ($request->expectsJson()) {
+            return response()->json([
+                'success' => true,
+                'message' => 'Area converted to postcode-based successfully',
+                'area' => $areas[$areaIndex]
+            ]);
+        }
+
+        return redirect()->route('areas.index')->with('success', 'Area converted to postcode-based successfully');
+    }
+
+    /**
+     * Update basic area information
+     */
+    private function updateBasicInfo(Request $request, array $areas, int $areaIndex)
+    {
+        $validated = $request->validate([
+            'name' => 'required|string|max:255',
+            'description' => 'nullable|string',
+            'active' => 'required|in:0,1'
+        ]);
+
+        $areas[$areaIndex]['name'] = $validated['name'];
+        $areas[$areaIndex]['description'] = $validated['description'];
+        $areas[$areaIndex]['active'] = (bool) $validated['active'];
+        $areas[$areaIndex]['updated_at'] = date('Y-m-d H:i:s');
+
+        $this->saveAreas($areas);
+
+        return redirect()->route('areas.index')->with('success', 'Area information updated successfully');
     }
 
     /**
