@@ -60,40 +60,60 @@
         /* Date filtering panel */
         .filter-panel {
             background: white;
-            padding: 20px;
-            border-radius: 8px;
-            margin-bottom: 20px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-            border-left: 4px solid #28a745;
+            padding: 25px;
+            border-radius: 12px;
+            margin-bottom: 25px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.15);
+            border: 2px solid #e9ecef;
         }
         
         .filter-tabs {
             display: flex;
-            margin-bottom: 15px;
-            border-bottom: 2px solid #e9ecef;
-            gap: 5px;
+            margin-bottom: 20px;
+            gap: 8px;
+            flex-wrap: wrap;
         }
         
         .filter-tab {
-            background: none;
-            border: none;
-            padding: 10px 20px;
-            font-size: 14px;
+            background: #f8f9fa;
+            border: 2px solid #dee2e6;
+            padding: 12px 20px;
+            font-size: 15px;
             font-weight: 600;
             cursor: pointer;
-            border-bottom: 3px solid transparent;
-            transition: all 0.2s;
-            border-radius: 4px 4px 0 0;
+            border-radius: 8px;
+            transition: all 0.3s ease;
+            color: #495057;
+            min-height: 48px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
         }
         
         .filter-tab.active {
-            color: #28a745;
-            border-bottom-color: #28a745;
-            background: #f8f9fa;
+            background: #28a745;
+            color: white;
+            border-color: #28a745;
+            box-shadow: 0 3px 8px rgba(40, 167, 69, 0.3);
+            transform: translateY(-1px);
         }
         
         .filter-tab:hover {
             background: #e9ecef;
+            border-color: #adb5bd;
+            transform: translateY(-1px);
+            box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+        }
+        
+        .filter-tab.active:hover {
+            background: #218838;
+            border-color: #218838;
+        }
+        
+        .filter-tab:focus {
+            outline: 3px solid #ffc107;
+            outline-offset: 2px;
         }
         
         .filter-content {
@@ -106,86 +126,155 @@
         
         .filter-controls {
             display: flex;
-            gap: 15px;
+            gap: 20px;
             align-items: center;
             flex-wrap: wrap;
+            padding: 15px;
+            background: #f8f9fa;
+            border-radius: 8px;
+            border: 1px solid #dee2e6;
         }
         
         .filter-group {
             display: flex;
             flex-direction: column;
-            gap: 5px;
+            gap: 8px;
         }
         
         .filter-group label {
-            font-weight: 600;
-            font-size: 12px;
-            color: #666;
-            text-transform: uppercase;
+            font-weight: 700;
+            font-size: 14px;
+            color: #212529;
+            text-transform: none;
         }
         
         .filter-group input, .filter-group select {
-            padding: 8px 12px;
-            border: 1px solid #ddd;
-            border-radius: 4px;
-            font-size: 14px;
+            padding: 12px 16px;
+            border: 2px solid #ced4da;
+            border-radius: 6px;
+            font-size: 16px;
+            min-height: 48px;
+            background: white;
+            color: #495057;
+            font-weight: 500;
+        }
+        
+        .filter-group input:focus, .filter-group select:focus {
+            outline: 3px solid #ffc107;
+            outline-offset: 2px;
+            border-color: #28a745;
         }
         
         .apply-filter-btn {
             background: #28a745;
             color: white;
-            border: none;
-            padding: 10px 20px;
-            border-radius: 4px;
-            font-weight: 600;
+            border: 2px solid #28a745;
+            padding: 12px 24px;
+            border-radius: 8px;
+            font-weight: 700;
+            font-size: 16px;
             cursor: pointer;
-            transition: background 0.2s;
+            transition: all 0.3s ease;
+            min-height: 48px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
         }
         
         .apply-filter-btn:hover {
             background: #218838;
+            border-color: #218838;
+            transform: translateY(-1px);
+            box-shadow: 0 3px 8px rgba(40, 167, 69, 0.3);
+        }
+        
+        .apply-filter-btn:focus {
+            outline: 3px solid #ffc107;
+            outline-offset: 2px;
         }
         
         .clear-filter-btn {
             background: #6c757d;
             color: white;
-            border: none;
-            padding: 10px 20px;
-            border-radius: 4px;
-            font-weight: 600;
+            border: 2px solid #6c757d;
+            padding: 12px 24px;
+            border-radius: 8px;
+            font-weight: 700;
+            font-size: 16px;
             cursor: pointer;
-            transition: background 0.2s;
+            transition: all 0.3s ease;
+            min-height: 48px;
         }
         
         .clear-filter-btn:hover {
             background: #545b62;
+            border-color: #545b62;
+            transform: translateY(-1px);
+            box-shadow: 0 3px 8px rgba(108, 117, 125, 0.3);
+        }
+        
+        .clear-filter-btn:focus {
+            outline: 3px solid #ffc107;
+            outline-offset: 2px;
         }
         
         .filter-summary {
-            background: #e8f4fd;
-            padding: 10px 15px;
-            border-radius: 4px;
-            margin-top: 15px;
-            font-size: 14px;
+            background: #d1ecf1;
+            padding: 15px 20px;
+            border-radius: 8px;
+            margin-top: 20px;
+            font-size: 16px;
             color: #0c5460;
-            border-left: 3px solid #17a2b8;
+            border: 2px solid #bee5eb;
+            font-weight: 500;
+            line-height: 1.5;
+        }
+        
+        .filter-description {
+            color: #495057;
+            font-size: 16px;
+            font-weight: 500;
+            padding: 10px 0;
         }
         
         @media (max-width: 768px) {
+            .filter-panel {
+                padding: 20px 15px;
+            }
+            
             .filter-tabs {
                 flex-direction: column;
+                gap: 10px;
             }
+            
             .filter-tab {
-                border-bottom: 1px solid #dee2e6;
-                border-radius: 4px;
-                margin-bottom: 2px;
+                font-size: 16px;
+                padding: 15px 20px;
+                min-height: 56px;
             }
-            .filter-tab.active {
-                border: 2px solid #28a745;
-            }
+            
             .filter-controls {
                 flex-direction: column;
                 align-items: stretch;
+                gap: 15px;
+            }
+            
+            .filter-group input, .filter-group select {
+                font-size: 18px;
+                min-height: 56px;
+            }
+            
+            .apply-filter-btn, .clear-filter-btn {
+                font-size: 18px;
+                min-height: 56px;
+                padding: 15px 30px;
+            }
+        }
+        
+        @media (max-width: 480px) {
+            .filter-tab {
+                font-size: 15px;
+                padding: 12px 16px;
             }
         }
     </style>
@@ -224,59 +313,82 @@
 
         <!-- Current Week Filter -->
         <div id="current-week-filter" class="filter-content active">
+            <div class="filter-description">Show collections for the current week (Monday to Sunday)</div>
             <div class="filter-controls">
-                <span style="color: #666;">Show collections for the current week (Monday to Sunday)</span>
-                <button class="apply-filter-btn" onclick="applyFilter('current-week')">🔍 Show Current Week</button>
+                <button class="apply-filter-btn" onclick="applyFilter('current-week')">
+                    🔍 Show Current Week Collections
+                </button>
             </div>
         </div>
 
         <!-- Next Week Filter -->
         <div id="next-week-filter" class="filter-content">
+            <div class="filter-description">Show collections for next week (Monday to Sunday)</div>
             <div class="filter-controls">
-                <span style="color: #666;">Show collections for next week (Monday to Sunday)</span>
-                <button class="apply-filter-btn" onclick="applyFilter('next-week')">🔍 Show Next Week</button>
+                <button class="apply-filter-btn" onclick="applyFilter('next-week')">
+                    🔍 Show Next Week Collections
+                </button>
             </div>
         </div>
 
         <!-- Two Weeks Filter -->
         <div id="two-weeks-filter" class="filter-content">
+            <div class="filter-description">Show collections for the next 2 weeks from today</div>
             <div class="filter-controls">
-                <span style="color: #666;">Show collections for the next 2 weeks from today</span>
-                <button class="apply-filter-btn" onclick="applyFilter('two-weeks')">🔍 Show Next 2 Weeks</button>
+                <button class="apply-filter-btn" onclick="applyFilter('two-weeks')">
+                    🔍 Show Next 2 Weeks Collections
+                </button>
             </div>
         </div>
 
         <!-- Specific Day Filter -->
         <div id="specific-day-filter" class="filter-content">
+            <div class="filter-description">Choose a specific date to view collections for that day</div>
             <div class="filter-controls">
                 <div class="filter-group">
-                    <label>Select Date</label>
-                    <input type="date" id="specific-date" value="">
+                    <label for="specific-date">Select Date</label>
+                    <input type="date" id="specific-date" value="" aria-describedby="specific-date-help">
+                    <div id="specific-date-help" style="font-size: 14px; color: #6c757d; margin-top: 4px;">
+                        Pick any date to see scheduled collections
+                    </div>
                 </div>
-                <button class="apply-filter-btn" onclick="applyFilter('specific-day')">🔍 Show Day</button>
+                <button class="apply-filter-btn" onclick="applyFilter('specific-day')">
+                    🔍 Show Selected Day Collections
+                </button>
             </div>
         </div>
 
         <!-- Date Range Filter -->
         <div id="date-range-filter" class="filter-content">
+            <div class="filter-description">Select a custom date range to view collections between two dates</div>
             <div class="filter-controls">
                 <div class="filter-group">
-                    <label>From Date</label>
-                    <input type="date" id="from-date" value="">
+                    <label for="from-date">From Date</label>
+                    <input type="date" id="from-date" value="" aria-describedby="from-date-help">
+                    <div id="from-date-help" style="font-size: 14px; color: #6c757d; margin-top: 4px;">
+                        Start date of range
+                    </div>
                 </div>
                 <div class="filter-group">
-                    <label>To Date</label>
-                    <input type="date" id="to-date" value="">
+                    <label for="to-date">To Date</label>
+                    <input type="date" id="to-date" value="" aria-describedby="to-date-help">
+                    <div id="to-date-help" style="font-size: 14px; color: #6c757d; margin-top: 4px;">
+                        End date of range
+                    </div>
                 </div>
-                <button class="apply-filter-btn" onclick="applyFilter('date-range')">🔍 Show Range</button>
+                <button class="apply-filter-btn" onclick="applyFilter('date-range')">
+                    🔍 Show Date Range Collections
+                </button>
             </div>
         </div>
 
         <!-- All Data Filter -->
         <div id="all-data-filter" class="filter-content">
+            <div class="filter-description">Show all collections without any date filtering</div>
             <div class="filter-controls">
-                <span style="color: #666;">Show all collections (no date filtering)</span>
-                <button class="apply-filter-btn" onclick="applyFilter('all-data')">🔍 Show All Data</button>
+                <button class="apply-filter-btn" onclick="applyFilter('all-data')">
+                    🔍 Show All Collections
+                </button>
             </div>
         </div>
 
