@@ -1,0 +1,159 @@
+name: 🚀 Deploy to Fasthost
+
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch: # Allow manual triggering
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: 📥 Checkout code
+      uses: actions/checkout@v4
+      
+    - name: 🐘 Setup PHP
+      uses: shivammathur/setup-php@v2
+      with:
+        php-version: '8.1'
+        extensions: mbstring, xml, ctype, iconv, intl, pdo, pdo_mysql, dom, filter, gd, iconv, json, mbstring, pdo
+        tools: composer:v2
+        
+    - name: 📦 Get Composer Cache Directory
+      id: composer-cache
+      run: echo "dir=$(composer config cache-files-dir)" >> $GITHUB_OUTPUT
+      
+    - name: 🗄️ Cache Composer dependencies
+      uses: actions/cache@v3
+      with:
+        path: ${{ steps.composer-cache.outputs.dir }}
+        key: ${{ runner.os }}-composer-${{ hashFiles('**/composer.lock') }}
+        restore-keys: ${{ runner.os }}-composer-
+        
+    - name: 🔧 Install Composer dependencies (production)
+      run: composer install --no-dev --optimize-autoloader --no-interaction --prefer-dist
+      
+    - name: 📝 Create production environment file
+      run: |
+        cp production.env.example .env
+        echo "APP_KEY=${{ secrets.APP_KEY }}" >> .env
+        echo "DB_DATABASE=${{ secrets.DB_DATABASE }}" >> .env
+        echo "DB_USERNAME=${{ secrets.DB_USERNAME }}" >> .env
+        echo "DB_PASSWORD=${{ secrets.DB_PASSWORD }}" >> .env
+        
+    - name: 🧹 Clear Laravel caches
+      run: |
+        php artisan config:clear
+        php artisan route:clear
+        php artisan view:clear
+        php artisan cache:clear
+        
+    - name: ⚡ Optimize Laravel for production
+      run: |
+        php artisan config:cache
+        php artisan route:cache
+        php artisan view:cache
+        
+    - name: 📦 Create deployment package
+      run: |
+        # Create deployment directory
+        mkdir deployment-package
+        
+        # Copy all files except excluded ones
+        rsync -av --exclude='.git' \
+                  --exclude='node_modules' \
+                  --exclude='tests' \
+                  --exclude='.github' \
+                  --exclude='storage/framework/cache/data' \
+                  --exclude='storage/logs/*.log' \
+                  --exclude='deploy_ftp.ps1' \
+                  --exclude='root_index.php' \
+                  --exclude='DEPLOYMENT_GUIDE.md' \
+                  --exclude='DEVELOPMENT_NOTES.md' \
+                  --exclude='production.env.example' \
+                  --exclude='create-deployment-package.ps1' \
+                  ./ deployment-package/
+                  
+        # Ensure storage directories exist with proper structure
+        mkdir -p deployment-package/storage/framework/cache/data
+        mkdir -p deployment-package/storage/framework/sessions
+        mkdir -p deployment-package/storage/framework/views
+        mkdir -p deployment-package/bootstrap/cache
+        
+        # Create deployment zip
+        cd deployment-package
+        zip -r ../binday-deployment.zip . -x "*.git*"
+        cd ..
+        
+        echo "📊 Deployment package size:"
+        ls -lh binday-deployment.zip
+        
+    - name: 🗂️ Create root index file
+      run: |
+        echo '<?php' > root-index.php
+        echo '// Front controller for shared hosting: route to subdirectory public index' >> root-index.php
+        echo 'require __DIR__."/binday/public/index.php";' >> root-index.php
+        
+    - name: 📤 Deploy via FTP
+      uses: SamKirkland/FTP-Deploy-Action@v4.3.4
+      with:
+        server: ftp.fasthosts.co.uk
+        username: ${{ secrets.FTP_USERNAME }}
+        password: ${{ secrets.FTP_PASSWORD }}
+        port: 21
+        protocol: ftps
+        local-dir: ./
+        server-dir: /htdocs/
+        exclude: |
+          **/.git*
+          **/.git*/**
+          **/node_modules/**
+          **/tests/**
+          **/.github/**
+          **/storage/framework/cache/data/**
+          **/storage/logs/*.log
+          deploy_ftp.ps1
+          DEPLOYMENT_GUIDE.md
+          DEVELOPMENT_NOTES.md
+          production.env.example
+          create-deployment-package.ps1
+          binday-deployment.zip
+        timeout: 300000
+        
+    - name: 📋 Upload root index
+      uses: SamKirkland/FTP-Deploy-Action@v4.3.4
+      with:
+        server: ftp.fasthosts.co.uk
+        username: ${{ secrets.FTP_USERNAME }}
+        password: ${{ secrets.FTP_PASSWORD }}
+        port: 21
+        protocol: ftps
+        local-dir: ./
+        server-dir: /htdocs/
+        include: root-index.php
+        exclude: |
+          **/*
+        timeout: 30000
+        
+    - name: 🔄 Post-deployment cleanup (if SSH available)
+      run: |
+        echo "If you have SSH access to Fasthost, run these commands:"
+        echo "cd /htdocs/binday"
+        echo "php artisan config:cache"
+        echo "chmod -R 755 storage bootstrap/cache"
+        echo ""
+        echo "Otherwise, set permissions via Fasthost File Manager:"
+        echo "- storage directory: 755"
+        echo "- bootstrap/cache directory: 755"
+        
+    - name: ✅ Deployment complete
+      run: |
+        echo "🎉 Deployment completed successfully!"
+        echo "🌐 Your application should be available at: https://thebinday.co.uk"
+        echo ""
+        echo "🔍 Next steps:"
+        echo "1. Check your website is loading correctly"
+        echo "2. Test the map functionality"
+        echo "3. Verify collection and area management features"
+        echo "4. Check admin seeding interface: https://thebinday.co.uk/admin/seed"
