@@ -1,0 +1,36 @@
+# Protect the entire Laravel application root
+<Files .env>
+    Order allow,deny
+    Deny from all
+</Files>
+
+<Files composer.json>
+    Order allow,deny
+    Deny from all
+</Files>
+
+<Files composer.lock>
+    Order allow,deny
+    Deny from all
+</Files>
+
+<Files .gitignore>
+    Order allow,deny
+    Deny from all
+</Files>
+
+# Protect storage directory from direct access
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+    RewriteRule ^storage/.* - [F,L]
+    RewriteRule ^bootstrap/cache/.* - [F,L]
+</IfModule>
+
+# Block access to sensitive directories
+<IfModule mod_alias.c>
+    RedirectMatch 403 /\.git
+    RedirectMatch 403 /\.env
+    RedirectMatch 403 /storage/app
+    RedirectMatch 403 /storage/framework
+    RedirectMatch 403 /bootstrap/cache
+</IfModule>

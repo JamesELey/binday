@@ -135,7 +135,10 @@ $files = Get-ChildItem -Path $projectRoot -Recurse -File -Force |
         $_.FullName -notmatch '\\node_modules\\' -and
         $_.FullName -notmatch '\\storage\\framework\\cache\\data\\' -and
         $_.FullName -notmatch '\\deploy_ftp.ps1$' -and
-        $_.FullName -notmatch '\\root_index.php$'
+        $_.FullName -notmatch '\\root_index.php$' -and
+        $_.FullName -notmatch '\\DEPLOYMENT_GUIDE.md$' -and
+        $_.FullName -notmatch '\\DEVELOPMENT_NOTES.md$' -and
+        $_.FullName -notmatch '\\production\.env\.example$'
     }
 
 foreach ($f in $files) {
