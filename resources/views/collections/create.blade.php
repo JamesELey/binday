@@ -166,11 +166,47 @@
                     <label for="bin_type">Bin Type <span class="required">*</span></label>
                     <select id="bin_type" name="bin_type" required>
                         <option value="">Select bin type...</option>
-                        <option value="Residual Waste" {{ old('bin_type') === 'Residual Waste' ? 'selected' : '' }}>🗑️ Residual Waste (General waste)</option>
-                        <option value="Recycling" {{ old('bin_type') === 'Recycling' ? 'selected' : '' }}>♻️ Recycling (Paper, plastic, cans)</option>
-                        <option value="Garden Waste" {{ old('bin_type') === 'Garden Waste' ? 'selected' : '' }}>🌿 Garden Waste (Grass, leaves, branches)</option>
-                        <option value="Food Waste" {{ old('bin_type') === 'Food Waste' ? 'selected' : '' }}>🥬 Food Waste (Kitchen scraps)</option>
+                        @if(isset($allBinTypes) && count($allBinTypes) > 0)
+                            @foreach($allBinTypes as $binType)
+                                <option value="{{ $binType }}" {{ old('bin_type') === $binType ? 'selected' : '' }}>
+                                    @if($binType === 'Food' || $binType === 'Food Waste')
+                                        🥬 {{ $binType }}
+                                    @elseif($binType === 'Recycling')
+                                        ♻️ {{ $binType }}
+                                    @elseif($binType === 'Garden' || $binType === 'Garden Waste')
+                                        🌿 {{ $binType }}
+                                    @elseif($binType === 'General Waste' || $binType === 'Residual Waste')
+                                        🗑️ {{ $binType }}
+                                    @elseif($binType === 'Glass')
+                                        🍾 {{ $binType }}
+                                    @elseif($binType === 'Paper')
+                                        📄 {{ $binType }}
+                                    @elseif($binType === 'Plastic')
+                                        ♻️ {{ $binType }}
+                                    @elseif($binType === 'Textiles')
+                                        👕 {{ $binType }}
+                                    @elseif($binType === 'Electronics')
+                                        📱 {{ $binType }}
+                                    @elseif($binType === 'Hazardous')
+                                        ⚠️ {{ $binType }}
+                                    @elseif($binType === 'Bulky Items')
+                                        📦 {{ $binType }}
+                                    @else
+                                        📋 {{ $binType }}
+                                    @endif
+                                </option>
+                            @endforeach
+                        @else
+                            <option value="Food" {{ old('bin_type') === 'Food' ? 'selected' : '' }}>🥬 Food</option>
+                            <option value="Recycling" {{ old('bin_type') === 'Recycling' ? 'selected' : '' }}>♻️ Recycling</option>
+                            <option value="Garden" {{ old('bin_type') === 'Garden' ? 'selected' : '' }}>🌿 Garden</option>
+                        @endif
                     </select>
+                    @if(isset($areas) && count($areas) > 0)
+                        <small style="color: #666; font-size: 14px; margin-top: 5px; display: block;">
+                            Available bin types depend on your collection area
+                        </small>
+                    @endif
                 </div>
                 <div class="form-group">
                     <label for="collection_date">Collection Date <span class="required">*</span></label>

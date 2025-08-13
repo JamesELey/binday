@@ -38,6 +38,12 @@ Route::delete('/areas/{area}', [AllowedAreaController::class, 'destroy'])->name(
 Route::get('/api/areas', [AllowedAreaController::class, 'apiList'])->name('api.areas');
 Route::post('/api/geocode', [AllowedAreaController::class, 'geocodePostcode'])->name('api.geocode');
 
+// Bin type management for areas
+Route::get('/areas/{area}/bin-types', [AllowedAreaController::class, 'manageBinTypes'])->name('areas.manageBinTypes');
+Route::put('/areas/{area}/bin-types', [AllowedAreaController::class, 'updateBinTypes'])->name('areas.updateBinTypes');
+Route::post('/areas/{area}/bin-types/add', [AllowedAreaController::class, 'addBinType'])->name('areas.addBinType');
+Route::delete('/areas/{area}/bin-types/remove', [AllowedAreaController::class, 'removeBinType'])->name('areas.removeBinType');
+
 // Enquiry
 Route::get('/enquiry', [EnquiryController::class, 'create'])->name('enquiry.create');
 Route::post('/enquiry', [EnquiryController::class, 'store'])->name('enquiry.store');

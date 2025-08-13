@@ -548,4 +548,172 @@ class AllowedAreaController extends Controller
 
         return in_array($postcodeArea, $allowedAreas);
     }
+
+    /**
+     * Show the bin types management page for an area
+     */
+    public function manageBinTypes($id)
+    {
+        $areas = $this->getAllAreas();
+        $area = collect($areas)->firstWhere('id', (int)$id);
+        
+        if (!$area) {
+            return redirect()->route('areas.index')->with('error', 'Area not found!');
+        }
+
+        // Get all possible bin types
+        $allBinTypes = [
+            'Food' => '#22c55e',     // green
+            'Recycling' => '#3b82f6', // blue  
+            'Garden' => '#a3721e',    // brown
+            'General Waste' => '#22c55e', // green (legacy)
+            'Residual Waste' => '#22c55e', // green (legacy)
+            'Glass' => '#14b8a6',     // teal
+            'Paper' => '#eab308',     // yellow
+            'Plastic' => '#ec4899',   // pink
+            'Textiles' => '#8b5cf6',  // purple
+            'Electronics' => '#64748b', // slate
+            'Hazardous' => '#ef4444',  // red
+            'Bulky Items' => '#f97316' // orange
+        ];
+
+        return view('areas.manage-bin-types', compact('area', 'allBinTypes'));
+    }
+
+    /**
+     * Update bin types for an area
+     */
+    public function updateBinTypes(Request $request, $id)
+    {
+        $request->validate([
+            'bin_types' => 'array',
+            'bin_types.*' => 'string|max:50',
+            'active_bin_types' => 'array',
+            'active_bin_types.*' => 'string|max:50'
+        ]);
+
+        $areas = $this->getAllAreas();
+        $areaIndex = null;
+        
+        foreach ($areas as $index => $area) {
+            if ($area['id'] == $id) {
+                $areaIndex = $index;
+                break;
+            }
+        }
+
+        if ($areaIndex === null) {
+            return redirect()->route('areas.index')->with('error', 'Area not found!');
+        }
+
+        // Get active bin types from checkboxes
+        $activeBinTypes = $request->input('active_bin_types', []);
+        
+        // Add any new custom bin types
+        $newBinTypes = $request->input('new_bin_types', []);
+        $newBinTypes = array_filter($newBinTypes, function($type) {
+            return !empty(trim($type));
+        });
+
+        // Combine active existing types with new types
+        $allBinTypes = array_merge($activeBinTypes, $newBinTypes);
+        $allBinTypes = array_unique($allBinTypes);
+        $allBinTypes = array_values($allBinTypes); // Re-index array
+
+        // Update the area
+        $areas[$areaIndex]['bin_types'] = $allBinTypes;
+        $areas[$areaIndex]['updated_at'] = date('Y-m-d H:i:s');
+
+        $this->saveAreas($areas);
+
+        return redirect()->route('areas.manageBinTypes', $id)
+                        ->with('success', 'Bin types updated successfully!');
+    }
+
+    /**
+     * Add a new bin type to an area
+     */
+    public function addBinType(Request $request, $id)
+    {
+        $request->validate([
+            'bin_type' => 'required|string|max:50'
+        ]);
+
+        $areas = $this->getAllAreas();
+        $areaIndex = null;
+        
+        foreach ($areas as $index => $area) {
+            if ($area['id'] == $id) {
+                $areaIndex = $index;
+                break;
+            }
+        }
+
+        if ($areaIndex === null) {
+            return response()->json(['error' => 'Area not found'], 404);
+        }
+
+        $newBinType = trim($request->input('bin_type'));
+        $currentBinTypes = $areas[$areaIndex]['bin_types'] ?? [];
+
+        // Check if bin type already exists
+        if (in_array($newBinType, $currentBinTypes)) {
+            return response()->json(['error' => 'Bin type already exists'], 400);
+        }
+
+        // Add the new bin type
+        $currentBinTypes[] = $newBinType;
+        $areas[$areaIndex]['bin_types'] = $currentBinTypes;
+        $areas[$areaIndex]['updated_at'] = date('Y-m-d H:i:s');
+
+        $this->saveAreas($areas);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Bin type added successfully',
+            'bin_type' => $newBinType
+        ]);
+    }
+
+    /**
+     * Remove a bin type from an area
+     */
+    public function removeBinType(Request $request, $id)
+    {
+        $request->validate([
+            'bin_type' => 'required|string'
+        ]);
+
+        $areas = $this->getAllAreas();
+        $areaIndex = null;
+        
+        foreach ($areas as $index => $area) {
+            if ($area['id'] == $id) {
+                $areaIndex = $index;
+                break;
+            }
+        }
+
+        if ($areaIndex === null) {
+            return response()->json(['error' => 'Area not found'], 404);
+        }
+
+        $binTypeToRemove = $request->input('bin_type');
+        $currentBinTypes = $areas[$areaIndex]['bin_types'] ?? [];
+
+        // Remove the bin type
+        $currentBinTypes = array_filter($currentBinTypes, function($type) use ($binTypeToRemove) {
+            return $type !== $binTypeToRemove;
+        });
+
+        $areas[$areaIndex]['bin_types'] = array_values($currentBinTypes);
+        $areas[$areaIndex]['updated_at'] = date('Y-m-d H:i:s');
+
+        $this->saveAreas($areas);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Bin type removed successfully'
+        ]);
+    }
 }

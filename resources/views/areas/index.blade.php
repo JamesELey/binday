@@ -258,6 +258,7 @@
                     <td>
                         <div class="action-buttons">
                             <a href="{{ route('areas.edit', $area['id']) }}" class="btn btn-edit">✏️ Edit</a>
+                            <a href="{{ route('areas.manageBinTypes', $area['id']) }}" class="btn btn-edit" style="background: #10b981;">🗂️ Bin Types</a>
                             <form action="{{ route('areas.destroy', $area['id']) }}" method="POST" style="display: inline;" onsubmit="return confirm('Are you sure you want to delete this area?');">
                                 @csrf
                                 @method('DELETE')

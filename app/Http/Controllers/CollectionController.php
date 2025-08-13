@@ -60,7 +60,24 @@ class CollectionController extends Controller
      */
     public function create()
     {
-        return view('collections.create');
+        // Get all areas to show available bin types
+        $areas = $this->getAllowedAreas();
+        
+        // Get all possible bin types from all areas
+        $allBinTypes = [];
+        foreach ($areas as $area) {
+            if (!empty($area['bin_types'])) {
+                $allBinTypes = array_merge($allBinTypes, $area['bin_types']);
+            }
+        }
+        $allBinTypes = array_unique($allBinTypes);
+        
+        // If no area-specific bin types, use defaults
+        if (empty($allBinTypes)) {
+            $allBinTypes = \App\Http\Controllers\BinScheduleController::getDefaultBinTypes();
+        }
+        
+        return view('collections.create', compact('allBinTypes', 'areas'));
     }
 
     /**
