@@ -168,6 +168,29 @@
     </div>
 
     <div class="content">
+        @if(session('success'))
+            <div style="background: #d4edda; color: #155724; padding: 15px; border-radius: 4px; margin-bottom: 20px; border: 1px solid #c3e6cb;">
+                {{ session('success') }}
+            </div>
+        @endif
+
+        @if(session('error'))
+            <div style="background: #f8d7da; color: #721c24; padding: 15px; border-radius: 4px; margin-bottom: 20px; border: 1px solid #f5c6cb;">
+                {{ session('error') }}
+            </div>
+        @endif
+
+        @if($errors->any())
+            <div style="background: #f8d7da; color: #721c24; padding: 15px; border-radius: 4px; margin-bottom: 20px; border: 1px solid #f5c6cb;">
+                <strong>Please fix the following errors:</strong>
+                <ul style="margin: 10px 0 0 0; padding-left: 20px;">
+                    @foreach($errors->all() as $error)
+                        <li>{{ $error }}</li>
+                    @endforeach
+                </ul>
+            </div>
+        @endif
+
         <div class="add-area-form">
             <h3>➕ Add New Allowed Area</h3>
             <div style="margin-bottom: 20px;">
@@ -182,25 +205,28 @@
                 <div class="form-row">
                     <div class="form-group">
                         <label for="name">Area Name</label>
-                        <input type="text" id="name" name="name" placeholder="e.g., Central London" required>
+                        <input type="text" id="name" name="name" placeholder="e.g., Central London" value="{{ old('name') }}" required>
                     </div>
                     <div class="form-group">
                         <label for="active">Status</label>
                         <select id="active" name="active">
-                            <option value="1">Active</option>
-                            <option value="0">Inactive</option>
+                            <option value="1" {{ old('active', '1') == '1' ? 'selected' : '' }}>Active</option>
+                            <option value="0" {{ old('active') == '0' ? 'selected' : '' }}>Inactive</option>
                         </select>
                     </div>
                 </div>
                 
                 <div class="form-group">
                     <label for="postcodes">Postcodes (comma-separated)</label>
-                    <input type="text" id="postcodes" name="postcodes" placeholder="e.g., EC1, EC2, EC3, WC1, WC2" required>
+                    <input type="text" id="postcodes" name="postcodes" placeholder="e.g., EC1, EC2, EC3, WC1, WC2" value="{{ old('postcodes') }}" required>
+                    <small style="color: #6c757d; font-size: 12px; display: block; margin-top: 5px;">
+                        Enter postcode areas separated by commas (e.g., EC1, EC2, N1, W1)
+                    </small>
                 </div>
                 
                 <div class="form-group">
                     <label for="description">Description</label>
-                    <textarea id="description" name="description" placeholder="Brief description of this area coverage"></textarea>
+                    <textarea id="description" name="description" placeholder="Brief description of this area coverage">{{ old('description') }}</textarea>
                 </div>
                 
                 <button type="submit" class="submit-btn">Add Area</button>

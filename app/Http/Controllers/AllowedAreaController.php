@@ -186,29 +186,48 @@ class AllowedAreaController extends Controller
             // Traditional form request
             $request->validate([
                 'name' => 'required|string|max:255',
-                'postcodes' => 'required|string',
-                'active' => 'required|boolean'
+                'postcodes' => 'required|string|min:2',
+                'active' => 'required|boolean',
+                'description' => 'nullable|string|max:500'
+            ], [
+                'name.required' => 'Area name is required',
+                'postcodes.required' => 'At least one postcode is required',
+                'postcodes.min' => 'Postcodes must be at least 2 characters long',
+                'active.required' => 'Please select a status for this area'
             ]);
+            
+            // Clean and validate postcodes
+            $postcodes = $request->input('postcodes');
+            $postcodes = trim($postcodes);
+            $postcodes = preg_replace('/\s*,\s*/', ', ', $postcodes); // Normalize spacing
+            
+            // Basic validation for postcode format
+            if (empty($postcodes)) {
+                return redirect()->back()
+                    ->withErrors(['postcodes' => 'Please enter at least one postcode'])
+                    ->withInput();
+            }
             
             // Create new postcode-based area
             $areas = $this->getAllAreas();
             $newArea = [
                 'id' => $this->getNextId(),
-                'name' => $request->input('name'),
-                'description' => $request->input('description', ''),
-                'postcodes' => $request->input('postcodes'),
+                'name' => trim($request->input('name')),
+                'description' => trim($request->input('description', '')),
+                'postcodes' => $postcodes,
                 'active' => $request->boolean('active'),
                 'type' => 'postcode',
                 'coordinates' => null,
                 'bin_types' => $request->input('bin_types', \App\Http\Controllers\BinScheduleController::getDefaultBinTypes()),
-                'created_at' => date('Y-m-d H:i:s')
+                'created_at' => date('Y-m-d H:i:s'),
+                'updated_at' => date('Y-m-d H:i:s')
             ];
             
             $areas[] = $newArea;
             $this->saveAreas($areas);
             
             return redirect()->route('areas.index')
-                ->with('success', 'Allowed area created successfully!');
+                ->with('success', 'Postcode-based area "' . $newArea['name'] . '" created successfully!');
         }
     }
 
