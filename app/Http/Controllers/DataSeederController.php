@@ -108,21 +108,29 @@ class DataSeederController extends Controller
     }
 
     /**
-     * Seed Eccleshall area with accurate polygon
+     * Seed Eccleshall area with realistic detailed polygon
      */
     public function seedEccleshallArea()
     {
-        // Eccleshall, Staffordshire polygon coordinates (approximated)
+        // Eccleshall, Staffordshire - detailed polygon covering the town boundary
         $eccleshallPolygon = [
-            [52.8508, -2.2519], // North point
-            [52.8511, -2.2483], // Northeast
-            [52.8498, -2.2441], // East
-            [52.8479, -2.2424], // Southeast
-            [52.8463, -2.2438], // South
-            [52.8456, -2.2467], // Southwest
-            [52.8464, -2.2503], // West
-            [52.8485, -2.2524], // Northwest
-            [52.8508, -2.2519]  // Close polygon
+            [52.8620, -2.2580], // North boundary (near A519)
+            [52.8615, -2.2520], // Northeast (Stafford Road area)
+            [52.8605, -2.2480], // East (towards Stone Road)
+            [52.8590, -2.2440], // Southeast (residential area)
+            [52.8575, -2.2420], // East boundary
+            [52.8560, -2.2435], // Southeast curve
+            [52.8545, -2.2455], // South (industrial/farm area)
+            [52.8535, -2.2480], // South boundary
+            [52.8530, -2.2510], // Southwest
+            [52.8525, -2.2540], // Southwest boundary
+            [52.8535, -2.2565], // West (towards Newport Road)
+            [52.8545, -2.2585], // Northwest
+            [52.8560, -2.2595], // North boundary (rural edge)
+            [52.8575, -2.2590], // North curve
+            [52.8590, -2.2585], // Northeast curve
+            [52.8605, -2.2580], // Back towards north
+            [52.8620, -2.2580]  // Close polygon
         ];
 
         // Save Eccleshall area
@@ -157,81 +165,184 @@ class DataSeederController extends Controller
      */
     public function seedEccleshallCollections()
     {
-        $addresses = $this->getEccleshallAddresses();
-        $binTypes = \App\Http\Controllers\BinScheduleController::getDefaultBinTypes();
-        $statuses = ['Scheduled', 'Pending', 'Completed'];
-        
         $collections = $this->getExistingCollections();
         $startId = $this->getNextCollectionId($collections);
+        $newCollections = [];
 
-        // Generate collections over 2 weeks
+        // Get collection routes (different areas of Eccleshall)
+        $routes = $this->getEccleshallRoutes();
+        
+        // Start from next Monday
         $startDate = new \DateTime();
-        $collections = [];
+        $startDate->modify('next monday');
+        
+        $collectionId = $startId;
 
-        for ($i = 0; $i < 20; $i++) {
-            // Random day within 2 weeks
-            $randomDays = rand(0, 13);
-            $collectionDate = clone $startDate;
-            $collectionDate->modify("+{$randomDays} days");
-
-            // Random time
-            $times = ['08:00', '09:30', '11:00', '12:30', '14:00', '15:30'];
-            $randomTime = $times[array_rand($times)];
-
-            // Random address and bin type
-            $address = $addresses[array_rand($addresses)];
-            $binType = $binTypes[array_rand($binTypes)];
-            $status = $statuses[array_rand($statuses)];
-
-            $collection = [
-                'id' => $startId + $i,
-                'customer_name' => $this->generateCustomerName(),
-                'phone' => $this->generatePhoneNumber(),
-                'address' => $address,
-                'bin_type' => $binType,
-                'collection_date' => $collectionDate->format('Y-m-d'),
-                'collection_time' => $randomTime,
-                'status' => $status,
-                'notes' => $this->generateRandomNotes(),
-                'created_at' => date('Y-m-d H:i:s')
-            ];
-
-            $collections[] = $collection;
+        // Generate 2 weeks of collections
+        for ($week = 0; $week < 2; $week++) {
+            // Week 1: Food waste collection
+            // Week 2: Recycling and Garden waste collection
+            $weekTypes = $week === 0 ? ['Food'] : ['Recycling', 'Garden'];
+            
+            // Collection days: Monday, Wednesday, Friday
+            $collectionDays = [0, 2, 4]; // Monday = 0, Wednesday = 2, Friday = 4
+            
+            foreach ($collectionDays as $dayOffset) {
+                $collectionDate = clone $startDate;
+                $collectionDate->modify("+{$week} weeks +{$dayOffset} days");
+                
+                // Each day covers one route (area of town)
+                $route = $routes[$dayOffset]; // Monday=Route1, Wed=Route2, Fri=Route3
+                
+                foreach ($route['addresses'] as $address) {
+                    foreach ($weekTypes as $binType) {
+                        $collection = [
+                            'id' => $collectionId++,
+                            'customer_name' => $this->generateCustomerName(),
+                            'phone' => $this->generatePhoneNumber(),
+                            'address' => $address,
+                            'bin_type' => $binType,
+                            'collection_date' => $collectionDate->format('Y-m-d'),
+                            'collection_time' => $route['time_slot'],
+                            'status' => $this->getRealisticStatus($collectionDate),
+                            'notes' => $this->generateRouteNotes($route['name'], $binType),
+                            'created_at' => date('Y-m-d H:i:s')
+                        ];
+                        
+                        $newCollections[] = $collection;
+                    }
+                }
+            }
         }
 
-        // Save collections
-        $this->saveCollections($collections);
+        // Sanitize and save collections
+        $sanitizedCollections = $this->sanitizeCollectionsData($newCollections);
+        $this->saveCollections($sanitizedCollections);
 
-        return $collections;
+        return $sanitizedCollections;
     }
 
     /**
-     * Get Eccleshall addresses (real streets)
+     * Get Eccleshall collection routes (realistic bin collection areas)
+     */
+    private function getEccleshallRoutes(): array
+    {
+        return [
+            // Monday Route - Town Centre & High Street Area
+            0 => [
+                'name' => 'Town Centre Route',
+                'time_slot' => '08:00',
+                'addresses' => [
+                    '12 High Street, Eccleshall, Staffordshire, ST21 6BZ',
+                    '45 Castle Street, Eccleshall, Staffordshire, ST21 6DF',
+                    '23 Stafford Street, Eccleshall, Staffordshire, ST21 6BH',
+                    '25 Sheepmarket, Eccleshall, Staffordshire, ST21 6BW',
+                    '15 Guildhall Lane, Eccleshall, Staffordshire, ST21 6LU',
+                    '33 School Lane, Eccleshall, Staffordshire, ST21 6LW',
+                    '27 Bishop\'s Court, Eccleshall, Staffordshire, ST21 6LS'
+                ]
+            ],
+            // Wednesday Route - Residential Estates North
+            2 => [
+                'name' => 'North Residential Route',
+                'time_slot' => '09:30',
+                'addresses' => [
+                    '67 Newport Road, Eccleshall, Staffordshire, ST21 6JB',
+                    '8 Stone Road, Eccleshall, Staffordshire, ST21 6JF',
+                    '34 Buchanan Avenue, Eccleshall, Staffordshire, ST21 6JL',
+                    '56 Badgers Croft, Eccleshall, Staffordshire, ST21 6LB',
+                    '41 Millfield Gardens, Eccleshall, Staffordshire, ST21 6LG',
+                    '73 Pinfold Lane, Eccleshall, Staffordshire, ST21 6LH',
+                    '52 The Limes, Eccleshall, Staffordshire, ST21 6LN'
+                ]
+            ],
+            // Friday Route - Modern Housing Developments South
+            4 => [
+                'name' => 'South Housing Route',
+                'time_slot' => '11:00',
+                'addresses' => [
+                    '19 Crooked Bridge Road, Eccleshall, Staffordshire, ST21 6LE',
+                    '14 Violets Way, Eccleshall, Staffordshire, ST21 6LP',
+                    '38 Weavers Close, Eccleshall, Staffordshire, ST21 6LQ',
+                    '61 Woods Lane, Eccleshall, Staffordshire, ST21 6LR',
+                    '49 Ferndale Close, Eccleshall, Staffordshire, ST21 6LT',
+                    '72 Offley Brook, Eccleshall, Staffordshire, ST21 6LV'
+                ]
+            ]
+        ];
+    }
+
+    /**
+     * Get Eccleshall addresses (real streets) - Legacy method for compatibility
      */
     private function getEccleshallAddresses(): array
     {
-        return [
-            '12 High Street, Eccleshall, Staffordshire, ST21 6BZ',
-            '45 Castle Street, Eccleshall, Staffordshire, ST21 6DF',
-            '23 Stafford Street, Eccleshall, Staffordshire, ST21 6BH',
-            '67 Newport Road, Eccleshall, Staffordshire, ST21 6JB',
-            '8 Stone Road, Eccleshall, Staffordshire, ST21 6JF',
-            '34 Buchanan Avenue, Eccleshall, Staffordshire, ST21 6JL',
-            '56 Badgers Croft, Eccleshall, Staffordshire, ST21 6LB',
-            '19 Crooked Bridge Road, Eccleshall, Staffordshire, ST21 6LE',
-            '41 Millfield Gardens, Eccleshall, Staffordshire, ST21 6LG',
-            '73 Pinfold Lane, Eccleshall, Staffordshire, ST21 6LH',
-            '25 Sheepmarket, Eccleshall, Staffordshire, ST21 6BW',
-            '52 The Limes, Eccleshall, Staffordshire, ST21 6LN',
-            '14 Violets Way, Eccleshall, Staffordshire, ST21 6LP',
-            '38 Weavers Close, Eccleshall, Staffordshire, ST21 6LQ',
-            '61 Woods Lane, Eccleshall, Staffordshire, ST21 6LR',
-            '27 Bishop\'s Court, Eccleshall, Staffordshire, ST21 6LS',
-            '49 Ferndale Close, Eccleshall, Staffordshire, ST21 6LT',
-            '15 Guildhall Lane, Eccleshall, Staffordshire, ST21 6LU',
-            '72 Offley Brook, Eccleshall, Staffordshire, ST21 6LV',
-            '33 School Lane, Eccleshall, Staffordshire, ST21 6LW'
+        $routes = $this->getEccleshallRoutes();
+        $allAddresses = [];
+        
+        foreach ($routes as $route) {
+            $allAddresses = array_merge($allAddresses, $route['addresses']);
+        }
+        
+        return $allAddresses;
+    }
+
+    /**
+     * Get realistic status based on collection date
+     */
+    private function getRealisticStatus(\DateTime $collectionDate): string
+    {
+        $now = new \DateTime();
+        $daysDiff = $collectionDate->diff($now)->days;
+        
+        if ($collectionDate < $now) {
+            // Past collections are mostly completed
+            return rand(1, 10) <= 8 ? 'Completed' : 'Pending';
+        } elseif ($daysDiff <= 2) {
+            // Near future collections are scheduled
+            return 'Scheduled';
+        } else {
+            // Far future collections are pending
+            return 'Pending';
+        }
+    }
+
+    /**
+     * Generate route-specific notes
+     */
+    private function generateRouteNotes(string $routeName, string $binType): string
+    {
+        $routeNotes = [
+            'Town Centre Route' => [
+                'Food' => 'Town centre collection - early morning to avoid traffic',
+                'Recycling' => 'High Street area - check for cardboard from shops',
+                'Garden' => 'Limited garden waste in town centre area'
+            ],
+            'North Residential Route' => [
+                'Food' => 'Residential area - family households, typical food waste',
+                'Recycling' => 'Good recycling participation in this area',
+                'Garden' => 'Large gardens - expect higher garden waste volume'
+            ],
+            'South Housing Route' => [
+                'Food' => 'Modern housing estate - younger families',
+                'Recycling' => 'New development - residents very environmentally conscious',
+                'Garden' => 'New gardens - moderate garden waste expected'
+            ]
         ];
+
+        $standardNotes = [
+            'Standard collection',
+            'Regular customer',
+            'No special requirements',
+            'Access via front gate',
+            'Leave bins after collection'
+        ];
+
+        if (isset($routeNotes[$routeName][$binType])) {
+            return $routeNotes[$routeName][$binType];
+        }
+
+        return $standardNotes[array_rand($standardNotes)];
     }
 
     /**
