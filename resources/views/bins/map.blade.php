@@ -56,6 +56,138 @@
             margin-bottom: 20px;
             border-left: 4px solid #007bff;
         }
+        
+        /* Date filtering panel */
+        .filter-panel {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            border-left: 4px solid #28a745;
+        }
+        
+        .filter-tabs {
+            display: flex;
+            margin-bottom: 15px;
+            border-bottom: 2px solid #e9ecef;
+            gap: 5px;
+        }
+        
+        .filter-tab {
+            background: none;
+            border: none;
+            padding: 10px 20px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            border-bottom: 3px solid transparent;
+            transition: all 0.2s;
+            border-radius: 4px 4px 0 0;
+        }
+        
+        .filter-tab.active {
+            color: #28a745;
+            border-bottom-color: #28a745;
+            background: #f8f9fa;
+        }
+        
+        .filter-tab:hover {
+            background: #e9ecef;
+        }
+        
+        .filter-content {
+            display: none;
+        }
+        
+        .filter-content.active {
+            display: block;
+        }
+        
+        .filter-controls {
+            display: flex;
+            gap: 15px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+        
+        .filter-group {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+        
+        .filter-group label {
+            font-weight: 600;
+            font-size: 12px;
+            color: #666;
+            text-transform: uppercase;
+        }
+        
+        .filter-group input, .filter-group select {
+            padding: 8px 12px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+        
+        .apply-filter-btn {
+            background: #28a745;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        
+        .apply-filter-btn:hover {
+            background: #218838;
+        }
+        
+        .clear-filter-btn {
+            background: #6c757d;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        
+        .clear-filter-btn:hover {
+            background: #545b62;
+        }
+        
+        .filter-summary {
+            background: #e8f4fd;
+            padding: 10px 15px;
+            border-radius: 4px;
+            margin-top: 15px;
+            font-size: 14px;
+            color: #0c5460;
+            border-left: 3px solid #17a2b8;
+        }
+        
+        @media (max-width: 768px) {
+            .filter-tabs {
+                flex-direction: column;
+            }
+            .filter-tab {
+                border-bottom: 1px solid #dee2e6;
+                border-radius: 4px;
+                margin-bottom: 2px;
+            }
+            .filter-tab.active {
+                border: 2px solid #28a745;
+            }
+            .filter-controls {
+                flex-direction: column;
+                align-items: stretch;
+            }
+        }
     </style>
 </head>
 <body>
@@ -77,6 +209,82 @@
         </div>
     </div>
     
+    <!-- Date Filtering Panel -->
+    <div class="filter-panel">
+        <h3 style="margin-top: 0;">📅 Filter Collections by Date</h3>
+        
+        <div class="filter-tabs">
+            <button class="filter-tab active" onclick="switchFilterTab('current-week')">📅 Current Week</button>
+            <button class="filter-tab" onclick="switchFilterTab('next-week')">📅 Next Week</button>
+            <button class="filter-tab" onclick="switchFilterTab('two-weeks')">📅 Next 2 Weeks</button>
+            <button class="filter-tab" onclick="switchFilterTab('specific-day')">📅 Specific Day</button>
+            <button class="filter-tab" onclick="switchFilterTab('date-range')">📅 Date Range</button>
+            <button class="filter-tab" onclick="switchFilterTab('all-data')">📅 All Data</button>
+        </div>
+
+        <!-- Current Week Filter -->
+        <div id="current-week-filter" class="filter-content active">
+            <div class="filter-controls">
+                <span style="color: #666;">Show collections for the current week (Monday to Sunday)</span>
+                <button class="apply-filter-btn" onclick="applyFilter('current-week')">🔍 Show Current Week</button>
+            </div>
+        </div>
+
+        <!-- Next Week Filter -->
+        <div id="next-week-filter" class="filter-content">
+            <div class="filter-controls">
+                <span style="color: #666;">Show collections for next week (Monday to Sunday)</span>
+                <button class="apply-filter-btn" onclick="applyFilter('next-week')">🔍 Show Next Week</button>
+            </div>
+        </div>
+
+        <!-- Two Weeks Filter -->
+        <div id="two-weeks-filter" class="filter-content">
+            <div class="filter-controls">
+                <span style="color: #666;">Show collections for the next 2 weeks from today</span>
+                <button class="apply-filter-btn" onclick="applyFilter('two-weeks')">🔍 Show Next 2 Weeks</button>
+            </div>
+        </div>
+
+        <!-- Specific Day Filter -->
+        <div id="specific-day-filter" class="filter-content">
+            <div class="filter-controls">
+                <div class="filter-group">
+                    <label>Select Date</label>
+                    <input type="date" id="specific-date" value="">
+                </div>
+                <button class="apply-filter-btn" onclick="applyFilter('specific-day')">🔍 Show Day</button>
+            </div>
+        </div>
+
+        <!-- Date Range Filter -->
+        <div id="date-range-filter" class="filter-content">
+            <div class="filter-controls">
+                <div class="filter-group">
+                    <label>From Date</label>
+                    <input type="date" id="from-date" value="">
+                </div>
+                <div class="filter-group">
+                    <label>To Date</label>
+                    <input type="date" id="to-date" value="">
+                </div>
+                <button class="apply-filter-btn" onclick="applyFilter('date-range')">🔍 Show Range</button>
+            </div>
+        </div>
+
+        <!-- All Data Filter -->
+        <div id="all-data-filter" class="filter-content">
+            <div class="filter-controls">
+                <span style="color: #666;">Show all collections (no date filtering)</span>
+                <button class="apply-filter-btn" onclick="applyFilter('all-data')">🔍 Show All Data</button>
+            </div>
+        </div>
+
+        <div class="filter-summary" id="filter-summary" style="display: none;">
+            <!-- Filter results will be shown here -->
+        </div>
+    </div>
+
     <div class="map-info">
         <strong>🎛️ Layer Controls:</strong> Use the controls in the top-right corner of the map to:
         <ul style="margin: 10px 0 0 20px;">
@@ -113,10 +321,14 @@
         return L.divIcon({ html, className: 'bin-dot', iconSize: [18, 18], iconAnchor: [9, 9], popupAnchor: [0, -9] });
     }
 
+    let allBinsData = []; // Store all bins data for filtering
+    let currentFilter = null; // Track current filter
+
     async function loadBinsData(){
         const res = await fetch('{{ route('api.bins') }}');
         const items = await res.json();
-        return items.filter(i => i.latitude && i.longitude);
+        allBinsData = items.filter(i => i.latitude && i.longitude);
+        return allBinsData;
     }
 
     async function loadAreasData(){
@@ -254,6 +466,252 @@
         } else {
             map.setView([52.8586, -2.2524], 13); // Eccleshall center fallback
         }
+    }
+
+    // Initialize default date values
+    function initializeDateInputs() {
+        const today = new Date();
+        const todayString = today.toISOString().split('T')[0];
+        
+        document.getElementById('specific-date').value = todayString;
+        document.getElementById('from-date').value = todayString;
+        
+        const twoWeeksLater = new Date(today);
+        twoWeeksLater.setDate(today.getDate() + 14);
+        document.getElementById('to-date').value = twoWeeksLater.toISOString().split('T')[0];
+    }
+
+    // Switch between filter tabs
+    function switchFilterTab(tabName) {
+        // Hide all tabs
+        document.querySelectorAll('.filter-content').forEach(content => {
+            content.classList.remove('active');
+        });
+        document.querySelectorAll('.filter-tab').forEach(tab => {
+            tab.classList.remove('active');
+        });
+
+        // Show selected tab
+        document.getElementById(tabName + '-filter').classList.add('active');
+        event.target.classList.add('active');
+    }
+
+    // Get date range for different filter types
+    function getDateRange(filterType) {
+        const today = new Date();
+        
+        switch (filterType) {
+            case 'current-week':
+                const currentMonday = new Date(today);
+                currentMonday.setDate(today.getDate() - ((today.getDay() + 6) % 7));
+                const currentSunday = new Date(currentMonday);
+                currentSunday.setDate(currentMonday.getDate() + 6);
+                return { from: currentMonday, to: currentSunday };
+                
+            case 'next-week':
+                const nextMonday = new Date(today);
+                nextMonday.setDate(today.getDate() - ((today.getDay() + 6) % 7) + 7);
+                const nextSunday = new Date(nextMonday);
+                nextSunday.setDate(nextMonday.getDate() + 6);
+                return { from: nextMonday, to: nextSunday };
+                
+            case 'two-weeks':
+                const twoWeeksLater = new Date(today);
+                twoWeeksLater.setDate(today.getDate() + 14);
+                return { from: today, to: twoWeeksLater };
+                
+            case 'specific-day':
+                const selectedDate = new Date(document.getElementById('specific-date').value);
+                return { from: selectedDate, to: selectedDate };
+                
+            case 'date-range':
+                const fromDate = new Date(document.getElementById('from-date').value);
+                const toDate = new Date(document.getElementById('to-date').value);
+                return { from: fromDate, to: toDate };
+                
+            case 'all-data':
+            default:
+                return null; // No filtering
+        }
+    }
+
+    // Filter data by date range
+    function filterDataByDateRange(data, dateRange) {
+        if (!dateRange) {
+            return data; // No filtering
+        }
+
+        return data.filter(item => {
+            const itemDate = new Date(item.collection_date);
+            return itemDate >= dateRange.from && itemDate <= dateRange.to;
+        });
+    }
+
+    // Apply date filter
+    function applyFilter(filterType) {
+        currentFilter = filterType;
+        const dateRange = getDateRange(filterType);
+        const filteredData = filterDataByDateRange(allBinsData, dateRange);
+        
+        // Update map with filtered data
+        updateMapWithFilteredData(filteredData);
+        
+        // Show filter summary
+        showFilterSummary(filterType, filteredData, dateRange);
+    }
+
+    // Update map with filtered data
+    function updateMapWithFilteredData(filteredData) {
+        // Clear existing layers
+        Object.values(binTypeLayers).forEach(layer => {
+            map.removeLayer(layer);
+        });
+
+        // Recreate layers with filtered data
+        binTypeLayers = createBinTypeLayers(filteredData);
+        
+        // Add filtered layers to map
+        Object.values(binTypeLayers).forEach(layer => {
+            map.addLayer(layer);
+        });
+
+        // Update layer control
+        if (layerControl) {
+            map.removeControl(layerControl);
+        }
+        
+        const overlayLayers = {
+            ...binTypeLayers,
+            [`📍 Allowed Areas (${areasData.length})`]: areasLayer
+        };
+        
+        layerControl = L.control.layers(null, overlayLayers, {
+            position: 'topright',
+            collapsed: false
+        });
+        layerControl.addTo(map);
+
+        // Fit map to filtered data if there is any
+        if (filteredData.length > 0) {
+            const allMarkers = [];
+            Object.values(binTypeLayers).forEach(cluster => {
+                cluster.eachLayer(marker => allMarkers.push(marker));
+            });
+            
+            if (allMarkers.length > 0) {
+                const group = new L.featureGroup(allMarkers);
+                map.fitBounds(group.getBounds().pad(0.1));
+            }
+        }
+    }
+
+    // Show filter summary
+    function showFilterSummary(filterType, filteredData, dateRange) {
+        const summaryDiv = document.getElementById('filter-summary');
+        let summaryText = '';
+        
+        switch (filterType) {
+            case 'current-week':
+                summaryText = `Showing ${filteredData.length} collections for current week (${dateRange.from.toLocaleDateString()} - ${dateRange.to.toLocaleDateString()})`;
+                break;
+            case 'next-week':
+                summaryText = `Showing ${filteredData.length} collections for next week (${dateRange.from.toLocaleDateString()} - ${dateRange.to.toLocaleDateString()})`;
+                break;
+            case 'two-weeks':
+                summaryText = `Showing ${filteredData.length} collections for next 2 weeks (${dateRange.from.toLocaleDateString()} - ${dateRange.to.toLocaleDateString()})`;
+                break;
+            case 'specific-day':
+                summaryText = `Showing ${filteredData.length} collections for ${dateRange.from.toLocaleDateString()}`;
+                break;
+            case 'date-range':
+                summaryText = `Showing ${filteredData.length} collections from ${dateRange.from.toLocaleDateString()} to ${dateRange.to.toLocaleDateString()}`;
+                break;
+            case 'all-data':
+                summaryText = `Showing all ${filteredData.length} collections (no date filter)`;
+                break;
+        }
+        
+        // Add bin type breakdown
+        const binTypeCounts = {};
+        filteredData.forEach(item => {
+            binTypeCounts[item.bin_type] = (binTypeCounts[item.bin_type] || 0) + 1;
+        });
+        
+        const breakdownText = Object.entries(binTypeCounts)
+            .map(([type, count]) => `${type}: ${count}`)
+            .join(', ');
+        
+        if (breakdownText) {
+            summaryText += `<br><strong>Breakdown:</strong> ${breakdownText}`;
+        }
+        
+        summaryDiv.innerHTML = summaryText;
+        summaryDiv.style.display = 'block';
+    }
+
+    // Store global variables for updates
+    let binTypeLayers = {};
+    let areasLayer;
+    let areasData = [];
+    let layerControl;
+
+    // Modified init function
+    async function init(){
+        const [binsData, areasDataResult] = await Promise.all([loadBinsData(), loadAreasData()]);
+        areasData = areasDataResult;
+
+        // Initialize map
+        const map = L.map('map');
+        const tiles = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '&copy; OpenStreetMap contributors'
+        }).addTo(map);
+
+        // Create layers
+        binTypeLayers = createBinTypeLayers(binsData);
+        areasLayer = createAreasLayer(areasData);
+
+        // Overlay layers (data layers only - no base layer selector needed)
+        const overlayLayers = {
+            ...binTypeLayers,
+            [`📍 Allowed Areas (${areasData.length})`]: areasLayer
+        };
+
+        // Add layer control
+        layerControl = L.control.layers(null, overlayLayers, {
+            position: 'topright',
+            collapsed: false
+        });
+        layerControl.addTo(map);
+
+        // Add default layers (show all bin types and areas by default)
+        Object.values(binTypeLayers).forEach(layer => map.addLayer(layer));
+        map.addLayer(areasLayer); // Add areas layer by default
+
+        // Set map view
+        if(binsData.length > 0){
+            // Get bounds from all bin markers
+            const allMarkers = [];
+            Object.values(binTypeLayers).forEach(cluster => {
+                cluster.eachLayer(marker => allMarkers.push(marker));
+            });
+
+            if (allMarkers.length > 0) {
+                const group = new L.featureGroup(allMarkers);
+                map.fitBounds(group.getBounds().pad(0.1));
+            }
+        } else {
+            map.setView([52.8586, -2.2524], 13); // Eccleshall center fallback
+        }
+
+        // Initialize date inputs
+        initializeDateInputs();
+
+        // Make map globally accessible
+        window.map = map;
+        window.binTypeLayers = binTypeLayers;
+        window.areasLayer = areasLayer;
+        window.areasData = areasData;
+        window.layerControl = layerControl;
     }
 
     init();
