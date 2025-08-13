@@ -1,9 +1,7 @@
 name: 🚀 Deploy to Fasthost
 
 on:
-  push:
-    branches: [ main ]
-  workflow_dispatch: # Allow manual triggering
+  workflow_dispatch: # Manual triggering only for production deployments
 
 jobs:
   deploy:

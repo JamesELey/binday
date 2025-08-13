@@ -1,9 +1,7 @@
 name: 📦 Create Deployment Package
 
 on:
-  push:
-    branches: [ main ]
-  workflow_dispatch: # Allow manual triggering
+  workflow_dispatch: # Manual triggering for deployment packages
     inputs:
       include_vendor:
         description: 'Include vendor directory (larger but complete)'
