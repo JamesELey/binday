@@ -95,7 +95,7 @@ jobs:
         echo '// Front controller for shared hosting: route to subdirectory public index' >> root-index.php
         echo 'require __DIR__."/binday/public/index.php";' >> root-index.php
         
-    - name: 📤 Deploy via FTP
+    - name: 📤 Deploy Laravel app to /htdocs/binday/
       uses: SamKirkland/FTP-Deploy-Action@v4.3.4
       with:
         server: ftp.fasthosts.co.uk
@@ -104,7 +104,7 @@ jobs:
         port: 21
         protocol: ftps
         local-dir: ./
-        server-dir: /htdocs/
+        server-dir: /htdocs/binday/
         exclude: |
           **/.git*
           **/.git*/**
@@ -119,9 +119,10 @@ jobs:
           production.env.example
           create-deployment-package.ps1
           binday-deployment.zip
+          root-index.php
         timeout: 300000
         
-    - name: 📋 Upload root index
+    - name: 📋 Upload root index as /htdocs/index.php
       uses: SamKirkland/FTP-Deploy-Action@v4.3.4
       with:
         server: ftp.fasthosts.co.uk
@@ -136,16 +137,22 @@ jobs:
           **/*
         timeout: 30000
         
-    - name: 🔄 Post-deployment cleanup (if SSH available)
+    - name: 🔄 Post-deployment verification
       run: |
+        echo "🔍 Testing deployment..."
+        # Test if the main site loads
+        curl -f -s "https://thebinday.co.uk" > /dev/null && echo "✅ Main site accessible" || echo "❌ Main site not accessible"
+        
+        echo ""
+        echo "Manual verification steps:"
+        echo "1. Visit: https://thebinday.co.uk"
+        echo "2. Test map: https://thebinday.co.uk/bins/map"
+        echo "3. Test collections: https://thebinday.co.uk/collections"
+        echo "4. Test areas: https://thebinday.co.uk/areas"
+        echo ""
         echo "If you have SSH access to Fasthost, run these commands:"
         echo "cd /htdocs/binday"
-        echo "php artisan config:cache"
         echo "chmod -R 755 storage bootstrap/cache"
-        echo ""
-        echo "Otherwise, set permissions via Fasthost File Manager:"
-        echo "- storage directory: 755"
-        echo "- bootstrap/cache directory: 755"
         
     - name: ✅ Deployment complete
       run: |
