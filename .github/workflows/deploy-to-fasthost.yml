@@ -31,9 +31,13 @@ jobs:
         
     - name: 🔧 Install Composer dependencies (production)
       run: |
-        # Handle potential lock file conflicts with PHP version
+        # Remove any existing vendor directory to avoid git conflicts
+        rm -rf vendor
+        
+        # Try install first, fallback to update if lock file conflicts
         if ! composer install --no-dev --optimize-autoloader --no-interaction --prefer-dist; then
           echo "Lock file conflicts detected, updating dependencies..."
+          rm -rf vendor composer.lock
           composer update --no-dev --optimize-autoloader --no-interaction --prefer-dist
         fi
       
