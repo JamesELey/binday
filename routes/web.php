@@ -83,3 +83,59 @@ Route::delete('/admin/seed/delete', [DataSeederController::class, 'deleteAll'])-
 Route::post('/admin/seed/eccleshall', [DataSeederController::class, 'seedEccleshallAreaOnly'])->name('seed.eccleshall');
 Route::post('/admin/seed/collections', [DataSeederController::class, 'seedCollectionsOnly'])->name('seed.collections');
 Route::get('/admin/seed/status', [DataSeederController::class, 'getDataSummary'])->name('seed.status');
+
+// Test route for form postcode area creation
+Route::post('/test-postcode-form', function(\Illuminate\Http\Request $request) {
+    \Log::info('Test postcode form submission', [
+        'all_data' => $request->all(),
+        'method' => $request->method(),
+        'is_json' => $request->isJson(),
+        'content_type' => $request->header('Content-Type')
+    ]);
+    
+    try {
+        $validated = $request->validate([
+            'name' => 'required|string|max:255',
+            'postcodes' => 'required|string|min:2',
+            'active' => 'required|in:0,1',
+            'description' => 'nullable|string|max:500'
+        ]);
+        
+        \Log::info('Validation passed', ['validated' => $validated]);
+        
+        return response()->json(['success' => true, 'validated' => $validated]);
+        
+    } catch (\Exception $e) {
+        \Log::error('Validation failed', ['error' => $e->getMessage()]);
+        return response()->json(['error' => $e->getMessage()], 400);
+    }
+});
+
+// Test route for postcode area creation
+Route::get('/test-postcode-area', function() {
+    $areas = json_decode(file_get_contents(storage_path('app/allowed_areas.json')), true) ?: [];
+    
+    $newArea = [
+        'id' => count($areas) + 1,
+        'name' => 'Test Postcode Area',
+        'description' => 'Test area created programmatically',
+        'postcodes' => 'SW1, SW2, SW3',
+        'active' => true,
+        'type' => 'postcode',
+        'coordinates' => null,
+        'bin_types' => ['Food', 'Recycling', 'Garden'],
+        'created_at' => date('Y-m-d H:i:s'),
+        'updated_at' => date('Y-m-d H:i:s')
+    ];
+    
+    $areas[] = $newArea;
+    
+    file_put_contents(storage_path('app/allowed_areas.json'), json_encode($areas, JSON_PRETTY_PRINT));
+    
+    return response()->json([
+        'success' => true,
+        'message' => 'Test postcode area created',
+        'area' => $newArea,
+        'total_areas' => count($areas)
+    ]);
+});

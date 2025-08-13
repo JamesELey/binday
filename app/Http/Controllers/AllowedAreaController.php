@@ -183,17 +183,24 @@ class AllowedAreaController extends Controller
                 'area' => $newArea
             ]);
         } else {
-            // Traditional form request
+            // Traditional form request (debugging)
+            \Log::info('Postcode area creation attempt', [
+                'request_data' => $request->all(),
+                'is_json' => $request->isJson(),
+                'content_type' => $request->header('Content-Type')
+            ]);
+            
             $request->validate([
                 'name' => 'required|string|max:255',
                 'postcodes' => 'required|string|min:2',
-                'active' => 'required|boolean',
+                'active' => 'required|in:0,1',
                 'description' => 'nullable|string|max:500'
             ], [
                 'name.required' => 'Area name is required',
                 'postcodes.required' => 'At least one postcode is required',
                 'postcodes.min' => 'Postcodes must be at least 2 characters long',
-                'active.required' => 'Please select a status for this area'
+                'active.required' => 'Please select a status for this area',
+                'active.in' => 'Status must be either Active or Inactive'
             ]);
             
             // Clean and validate postcodes
@@ -225,6 +232,11 @@ class AllowedAreaController extends Controller
             
             $areas[] = $newArea;
             $this->saveAreas($areas);
+            
+            \Log::info('Postcode area created successfully', [
+                'area' => $newArea,
+                'total_areas' => count($areas)
+            ]);
             
             return redirect()->route('areas.index')
                 ->with('success', 'Postcode-based area "' . $newArea['name'] . '" created successfully!');

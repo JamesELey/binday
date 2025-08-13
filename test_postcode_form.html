@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Test Postcode Area Creation</title>
+</head>
+<body>
+    <h1>Test Postcode Area Creation</h1>
+    <form action="http://127.0.0.1:8000/areas" method="POST">
+        <input type="hidden" name="_token" value="test-token">
+        
+        <label>Area Name:</label><br>
+        <input type="text" name="name" value="Test London Area" required><br><br>
+        
+        <label>Postcodes:</label><br>
+        <input type="text" name="postcodes" value="W1, W2, WC1, WC2" required><br><br>
+        
+        <label>Status:</label><br>
+        <select name="active" required>
+            <option value="1">Active</option>
+            <option value="0">Inactive</option>
+        </select><br><br>
+        
+        <label>Description:</label><br>
+        <textarea name="description">Test area for London postcodes</textarea><br><br>
+        
+        <button type="submit">Create Area</button>
+    </form>
+</body>
+</html>
