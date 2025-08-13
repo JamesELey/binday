@@ -1,7 +1,9 @@
-name: 🚀 Deploy to Fasthost
+name: 🚀 Deploy to Fasthost (DISABLED - Use Optimized Version)
 
 on:
-  workflow_dispatch: # Manual triggering only for production deployments
+  # Disabled due to timeout issues with large vendor directory uploads
+  # Use deploy-to-fasthost-optimized.yml or deploy-to-fasthost-slim.yml instead
+  workflow_dispatch_disabled: # Manual triggering disabled
 
 jobs:
   deploy:

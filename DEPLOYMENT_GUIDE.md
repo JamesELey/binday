@@ -363,9 +363,29 @@ These files are automatically included in the deployment.
 
 ---
 
-## 🎯 **Quick Deployment Summary (After 80-Minute Timeout)**
+## 🎯 **Quick Deployment Summary (Optimized - No More Timeouts!)**
 
-### **🥇 Best Approach: GitHub Actions (Recommended)**
+### **🆕 NEW: Optimized GitHub Actions Workflows**
+
+**Problem Solved**: The original deployment was timing out after 80+ minutes due to large vendor directory uploads.
+
+**Solution**: Two new optimized workflows that eliminate timeouts:
+
+#### **🚀 Workflow 1: Optimized Zip Deployment** (`deploy-to-fasthost-optimized.yml`)
+- **📦 Smart Packaging**: Creates compressed deployment package (~20MB vs 200MB+)
+- **⚡ Fast Upload**: Uploads zip + extraction script via FTP
+- **🤖 Auto Extract**: Server-side extraction for atomic deployment
+- **⏱️ Time**: 2-5 minutes total
+- **✅ Recommended for**: Regular deployments
+
+#### **🚀 Workflow 2: Slim Upload + Remote Setup** (`deploy-to-fasthost-slim.yml`)
+- **📤 Lean Upload**: Excludes vendor directory from upload
+- **🔧 Remote Install**: Runs `composer install` on server via HTTP
+- **⚡ Fast Transfer**: Only uploads source code + configs
+- **⏱️ Time**: 3-8 minutes total  
+- **✅ Recommended for**: When server has composer access
+
+### **🥇 Original Approach: GitHub Actions (DEPRECATED)**
 
 **⭐ Fully automated, reliable, and fast deployment:**
 
