@@ -240,8 +240,9 @@
             collapsed: false
         }).addTo(map);
         
-        // Add default layers (show all bin types by default)
+        // Add default layers (show all bin types and areas by default)
         Object.values(binTypeLayers).forEach(layer => map.addLayer(layer));
+        map.addLayer(areasLayer); // Add areas layer by default
         
         // Set map view
         if(binsData.length > 0){

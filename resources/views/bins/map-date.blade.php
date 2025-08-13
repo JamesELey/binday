@@ -96,14 +96,49 @@
         return filteredItems;
     }
 
+    async function loadAreasData(){
+        const res = await fetch('{{ route('api.areas') }}');
+        const data = await res.json();
+        return data.areas || [];
+    }
+
+    function createAreasLayer(areas) {
+        const areasGroup = L.layerGroup();
+        
+        areas.forEach(area => {
+            if (area.type === 'map' && area.coordinates && area.coordinates.length > 0) {
+                // Create polygon for map-based areas
+                const polygon = L.polygon(area.coordinates, {
+                    color: area.active ? '#28a745' : '#6c757d',
+                    fillColor: area.active ? '#28a745' : '#6c757d',
+                    fillOpacity: 0.1,
+                    weight: 2
+                }).addTo(areasGroup);
+                
+                polygon.bindPopup(`
+                    <strong>${area.name}</strong><br/>
+                    ${area.description || ''}<br/>
+                    <small>Status: ${area.active ? 'Active' : 'Inactive'}</small><br/>
+                    <small>Type: Map Area</small>
+                `);
+            }
+        });
+        
+        return areasGroup;
+    }
+
     async function init(){
+        const [items, areasData] = await Promise.all([loadData(), loadAreasData()]);
+        
         const map = L.map('map').setView([52.8586, -2.2524], 13); // Eccleshall center
         
-        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { 
-            attribution: '&copy; OpenStreetMap contributors' 
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '&copy; OpenStreetMap contributors'
         }).addTo(map);
-        
-        const items = await loadData();
+
+        // Add areas layer
+        const areasLayer = createAreasLayer(areasData);
+        map.addLayer(areasLayer);
         
         if(items.length){
             const cluster = L.markerClusterGroup({ 
