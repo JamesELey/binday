@@ -41,7 +41,11 @@ jobs:
       run: |
         if [ "${{ github.event.inputs.include_vendor }}" = "true" ]; then
           echo "Installing production dependencies..."
-          composer install --no-dev --optimize-autoloader --no-interaction --prefer-dist
+          # Handle potential lock file conflicts with PHP version
+          if ! composer install --no-dev --optimize-autoloader --no-interaction --prefer-dist; then
+            echo "Lock file conflicts detected, updating dependencies..."
+            composer update --no-dev --optimize-autoloader --no-interaction --prefer-dist
+          fi
         else
           echo "Skipping vendor directory - you'll need to run 'composer install' on the server"
         fi
