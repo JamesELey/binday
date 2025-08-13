@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
+use App\Services\PostcodePolygonService;
 
 class AllowedAreaController extends Controller
 {
@@ -745,6 +746,134 @@ class AllowedAreaController extends Controller
         return response()->json([
             'success' => true,
             'message' => 'Bin type removed successfully'
+        ]);
+    }
+
+    /**
+     * Convert a postcode area to polygon coordinates
+     */
+    public function convertToPolygon($id)
+    {
+        $areas = $this->getAllAreas();
+        $areaIndex = null;
+        
+        foreach ($areas as $index => $area) {
+            if ($area['id'] == $id) {
+                $areaIndex = $index;
+                break;
+            }
+        }
+
+        if ($areaIndex === null) {
+            return response()->json(['error' => 'Area not found'], 404);
+        }
+
+        $area = $areas[$areaIndex];
+
+        if ($area['type'] !== 'postcode') {
+            return response()->json(['error' => 'Only postcode areas can be converted to polygons'], 400);
+        }
+
+        if (empty($area['postcodes'])) {
+            return response()->json(['error' => 'No postcodes found for this area'], 400);
+        }
+
+        // Use the PostcodePolygonService to convert postcodes to polygon
+        $polygonService = new PostcodePolygonService();
+        $coordinates = $polygonService->convertPostcodesToPolygon($area['postcodes']);
+
+        if (!$coordinates) {
+            return response()->json(['error' => 'Failed to generate polygon from postcodes'], 500);
+        }
+
+        // Update the area to be map-based with polygon coordinates
+        $areas[$areaIndex]['type'] = 'map';
+        $areas[$areaIndex]['coordinates'] = $coordinates;
+        $areas[$areaIndex]['updated_at'] = date('Y-m-d H:i:s');
+
+        $this->saveAreas($areas);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Area converted to polygon successfully',
+            'area' => $areas[$areaIndex],
+            'coordinates_count' => count($coordinates)
+        ]);
+    }
+
+    /**
+     * Get polygon coordinates for a postcode area (without saving)
+     */
+    public function getPolygonPreview($id)
+    {
+        $areas = $this->getAllAreas();
+        $area = collect($areas)->firstWhere('id', (int)$id);
+        
+        if (!$area) {
+            return response()->json(['error' => 'Area not found'], 404);
+        }
+
+        if ($area['type'] !== 'postcode') {
+            return response()->json(['error' => 'Only postcode areas can be previewed as polygons'], 400);
+        }
+
+        if (empty($area['postcodes'])) {
+            return response()->json(['error' => 'No postcodes found for this area'], 400);
+        }
+
+        // Generate polygon coordinates without saving
+        $polygonService = new PostcodePolygonService();
+        $coordinates = $polygonService->convertPostcodesToPolygon($area['postcodes']);
+
+        if (!$coordinates) {
+            return response()->json(['error' => 'Failed to generate polygon from postcodes'], 500);
+        }
+
+        return response()->json([
+            'success' => true,
+            'area' => $area,
+            'polygon_coordinates' => $coordinates,
+            'coordinates_count' => count($coordinates)
+        ]);
+    }
+
+    /**
+     * Batch convert all postcode areas to polygons
+     */
+    public function convertAllPostcodeAreas()
+    {
+        $areas = $this->getAllAreas();
+        $converted = [];
+        $errors = [];
+
+        $polygonService = new PostcodePolygonService();
+
+        foreach ($areas as $index => $area) {
+            if ($area['type'] === 'postcode' && !empty($area['postcodes'])) {
+                $coordinates = $polygonService->convertPostcodesToPolygon($area['postcodes']);
+                
+                if ($coordinates) {
+                    $areas[$index]['type'] = 'map';
+                    $areas[$index]['coordinates'] = $coordinates;
+                    $areas[$index]['updated_at'] = date('Y-m-d H:i:s');
+                    $converted[] = $area['name'];
+                } else {
+                    $errors[] = $area['name'];
+                }
+            }
+        }
+
+        if (!empty($converted)) {
+            $this->saveAreas($areas);
+        }
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Batch conversion completed',
+            'converted' => $converted,
+            'errors' => $errors,
+            'converted_count' => count($converted),
+            'error_count' => count($errors)
         ]);
     }
 }

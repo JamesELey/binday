@@ -3,6 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>Manage Allowed Areas - Bin Collection Admin</title>
     <style>
         body {
@@ -233,6 +234,24 @@
             </form>
         </div>
 
+        @if(count(array_filter($areas, fn($a) => $a['type'] === 'postcode')) > 0)
+            <div style="background: #e0f2fe; padding: 20px; border-radius: 8px; margin-bottom: 30px; border-left: 4px solid #0288d1;">
+                <h3 style="margin-top: 0; color: #01579b;">🗺️ Convert Postcode Areas to Polygons</h3>
+                <p style="margin-bottom: 15px; color: #0277bd;">
+                    Transform your postcode-based areas into visual polygons that can be displayed on the map. 
+                    This allows for better geographic visualization and more accurate boundary representation.
+                </p>
+                <div style="display: flex; gap: 10px; align-items: center;">
+                    <button onclick="convertAllPostcodeAreas()" class="btn btn-primary" style="background: #f59e0b; color: white;">
+                        🔄 Convert All Postcode Areas
+                    </button>
+                    <span style="color: #0277bd; font-size: 14px;">
+                        {{ count(array_filter($areas, fn($a) => $a['type'] === 'postcode')) }} postcode area(s) available for conversion
+                    </span>
+                </div>
+            </div>
+        @endif
+
         <h2>Current Allowed Areas</h2>
         <p>Manage the areas where bin collection services are available:</p>
 
@@ -285,6 +304,10 @@
                         <div class="action-buttons">
                             <a href="{{ route('areas.edit', $area['id']) }}" class="btn btn-edit">✏️ Edit</a>
                             <a href="{{ route('areas.manageBinTypes', $area['id']) }}" class="btn btn-edit" style="background: #10b981;">🗂️ Bin Types</a>
+                            @if($area['type'] === 'postcode')
+                                <button onclick="previewPolygon({{ $area['id'] }})" class="btn btn-edit" style="background: #8b5cf6;">👁️ Preview</button>
+                                <button onclick="convertToPolygon({{ $area['id'] }})" class="btn btn-edit" style="background: #f59e0b;">🗺️ Convert</button>
+                            @endif
                             <form action="{{ route('areas.destroy', $area['id']) }}" method="POST" style="display: inline;" onsubmit="return confirm('Are you sure you want to delete this area?');">
                                 @csrf
                                 @method('DELETE')
@@ -331,5 +354,111 @@
             </ul>
         </div>
     </div>
+
+    <script>
+        // CSRF token for AJAX requests
+        const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '';
+
+        /**
+         * Preview polygon for a postcode area
+         */
+        function previewPolygon(areaId) {
+            fetch(`/areas/${areaId}/polygon-preview`, {
+                method: 'GET',
+                headers: {
+                    'X-CSRF-TOKEN': csrfToken,
+                    'Accept': 'application/json'
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    alert(`Polygon Preview for "${data.area.name}":\n\n` +
+                          `Coordinates: ${data.coordinates_count} points\n` +
+                          `Postcodes: ${data.area.postcodes}\n\n` +
+                          'Click "Convert" to permanently convert this area to a polygon.');
+                } else {
+                    alert('Error: ' + (data.error || 'Failed to generate polygon preview'));
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('Error generating polygon preview');
+            });
+        }
+
+        /**
+         * Convert postcode area to polygon
+         */
+        function convertToPolygon(areaId) {
+            if (!confirm('Convert this postcode area to a polygon?\n\nThis will:\n• Generate geographic boundaries from the postcodes\n• Change the area type from "postcode" to "map"\n• Allow it to be displayed on the map\n\nContinue?')) {
+                return;
+            }
+
+            fetch(`/areas/${areaId}/convert-to-polygon`, {
+                method: 'POST',
+                headers: {
+                    'X-CSRF-TOKEN': csrfToken,
+                    'Accept': 'application/json',
+                    'Content-Type': 'application/json'
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    alert(`Success! "${data.area.name}" converted to polygon with ${data.coordinates_count} coordinate points.`);
+                    window.location.reload(); // Refresh to show updated area
+                } else {
+                    alert('Error: ' + (data.error || 'Failed to convert area to polygon'));
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('Error converting area to polygon');
+            });
+        }
+
+        /**
+         * Convert all postcode areas to polygons
+         */
+        function convertAllPostcodeAreas() {
+            if (!confirm('Convert ALL postcode areas to polygons?\n\nThis will:\n• Generate geographic boundaries for all postcode-based areas\n• Change their type from "postcode" to "map"\n• Allow them all to be displayed on the map\n\nContinue?')) {
+                return;
+            }
+
+            fetch('/areas/convert-all-postcodes', {
+                method: 'POST',
+                headers: {
+                    'X-CSRF-TOKEN': csrfToken,
+                    'Accept': 'application/json',
+                    'Content-Type': 'application/json'
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    let message = `Batch Conversion Results:\n\n`;
+                    message += `✅ Successfully converted: ${data.converted_count} area(s)\n`;
+                    if (data.converted.length > 0) {
+                        message += `   • ${data.converted.join('\n   • ')}\n\n`;
+                    }
+                    if (data.error_count > 0) {
+                        message += `❌ Failed to convert: ${data.error_count} area(s)\n`;
+                        if (data.errors.length > 0) {
+                            message += `   • ${data.errors.join('\n   • ')}\n`;
+                        }
+                    }
+                    alert(message);
+                    window.location.reload(); // Refresh to show updated areas
+                } else {
+                    alert('Error: ' + (data.error || 'Failed to convert areas'));
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('Error converting areas to polygons');
+            });
+        }
+    </script>
 </body>
 </html>

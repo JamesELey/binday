@@ -44,6 +44,11 @@ Route::put('/areas/{area}/bin-types', [AllowedAreaController::class, 'updateBinT
 Route::post('/areas/{area}/bin-types/add', [AllowedAreaController::class, 'addBinType'])->name('areas.addBinType');
 Route::delete('/areas/{area}/bin-types/remove', [AllowedAreaController::class, 'removeBinType'])->name('areas.removeBinType');
 
+// Postcode to polygon conversion
+Route::post('/areas/{area}/convert-to-polygon', [AllowedAreaController::class, 'convertToPolygon'])->name('areas.convertToPolygon');
+Route::get('/areas/{area}/polygon-preview', [AllowedAreaController::class, 'getPolygonPreview'])->name('areas.polygonPreview');
+Route::post('/areas/convert-all-postcodes', [AllowedAreaController::class, 'convertAllPostcodeAreas'])->name('areas.convertAllPostcodes');
+
 // Enquiry
 Route::get('/enquiry', [EnquiryController::class, 'create'])->name('enquiry.create');
 Route::post('/enquiry', [EnquiryController::class, 'store'])->name('enquiry.store');
