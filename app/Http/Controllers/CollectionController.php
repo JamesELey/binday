@@ -209,4 +209,18 @@ class CollectionController extends Controller
         return redirect()->route('collections.manage')
             ->with('success', 'Collection deleted successfully!');
     }
+
+    /**
+     * Get all allowed areas for bin type determination
+     */
+    private function getAllowedAreas(): array
+    {
+        $storagePath = storage_path('app/allowed_areas.json');
+        if (!file_exists($storagePath)) {
+            return [];
+        }
+        
+        $json = file_get_contents($storagePath);
+        return json_decode($json, true) ?: [];
+    }
 }
