@@ -1,5 +1,16 @@
 $ErrorActionPreference = 'Stop'
 
+# Tunables
+$ftpUsePassive = $true
+$ftpEnableSsl = $true
+$ftpKeepAlive = $true
+$ftpDisableProxy = $true
+$ftpTimeoutMs = 900000           # 15 minutes
+$ftpReadWriteTimeoutMs = 900000  # 15 minutes
+$ftpMaxRetries = 3
+$ftpRetryDelaySeconds = 3
+$ftpUploadBufferSize = 65536     # 64 KiB
+
 function New-FtpRequest {
     param(
         [string]$Uri,
@@ -9,15 +20,17 @@ function New-FtpRequest {
     )
     # Ensure TLS 1.2
     [System.Net.ServicePointManager]::SecurityProtocol = [System.Net.SecurityProtocolType]::Tls12
+    [System.Net.ServicePointManager]::Expect100Continue = $false
     $req = [System.Net.FtpWebRequest]::Create($Uri)
     $req.Method = $Method
     $req.Credentials = New-Object System.Net.NetworkCredential($User, $Pass)
+    if ($ftpDisableProxy) { $req.Proxy = [System.Net.GlobalProxySelection]::GetEmptyWebProxy() }
     $req.UseBinary = $true
-    $req.KeepAlive = $false
-    $req.UsePassive = $true
-    $req.EnableSsl = $true  # Explicit FTPS
-    $req.ReadWriteTimeout = 300000
-    $req.Timeout = 300000
+    $req.KeepAlive = $ftpKeepAlive
+    $req.UsePassive = $ftpUsePassive
+    $req.EnableSsl = $ftpEnableSsl  # Explicit FTPS
+    $req.ReadWriteTimeout = $ftpReadWriteTimeoutMs
+    $req.Timeout = $ftpTimeoutMs
     return $req
 }
 
@@ -56,14 +69,39 @@ function Upload-FtpFile {
         Ensure-FtpDirectory -BaseUri $BaseUri -RemoteDir $remoteDir -User $User -Pass $Pass
     }
     $uri = ($BaseUri.TrimEnd('/') + '/' + $RemotePath.TrimStart('/'))
-    $req = New-FtpRequest -Uri $uri -Method ([System.Net.WebRequestMethods+Ftp]::UploadFile) -User $User -Pass $Pass
-    $bytes = [System.IO.File]::ReadAllBytes($LocalFile)
-    $req.ContentLength = $bytes.Length
-    $stream = $req.GetRequestStream()
-    $stream.Write($bytes, 0, $bytes.Length)
-    $stream.Close()
-    $res = $req.GetResponse()
-    $res.Close()
+    $attempt = 0
+    $usePassiveLocal = $ftpUsePassive
+    while ($true) {
+        $attempt += 1
+        try {
+            $req = New-FtpRequest -Uri $uri -Method ([System.Net.WebRequestMethods+Ftp]::UploadFile) -User $User -Pass $Pass
+            $req.UsePassive = $usePassiveLocal
+
+            $fileStream = [System.IO.File]::OpenRead($LocalFile)
+            try {
+                $req.ContentLength = $fileStream.Length
+                $outStream = $req.GetRequestStream()
+                try {
+                    $buffer = New-Object byte[] $ftpUploadBufferSize
+                    while (($bytesRead = $fileStream.Read($buffer, 0, $buffer.Length)) -gt 0) {
+                        $outStream.Write($buffer, 0, $bytesRead)
+                    }
+                } finally {
+                    if ($outStream) { $outStream.Close() }
+                }
+            } finally {
+                if ($fileStream) { $fileStream.Close() }
+            }
+
+            $res = $req.GetResponse()
+            try { } finally { if ($res) { $res.Close() } }
+            break
+        } catch {
+            if ($attempt -ge $ftpMaxRetries) { throw $_ }
+            Start-Sleep -Seconds $ftpRetryDelaySeconds
+            if ($attempt -eq ($ftpMaxRetries - 1)) { $usePassiveLocal = -not $ftpUsePassive }
+        }
+    }
 }
 
 # Config
