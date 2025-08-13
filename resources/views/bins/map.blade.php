@@ -223,19 +223,14 @@
         const binTypeLayers = createBinTypeLayers(binsData);
         const areasLayer = createAreasLayer(areasData);
         
-        // Base layers (map tiles)
-        const baseLayers = {
-            "OpenStreetMap": tiles
-        };
-        
-        // Overlay layers (data layers)
+        // Overlay layers (data layers only - no base layer selector needed)
         const overlayLayers = {
             ...binTypeLayers,
             [`📍 Allowed Areas (${areasData.length})`]: areasLayer
         };
         
-        // Add layer control
-        L.control.layers(baseLayers, overlayLayers, {
+        // Add layer control (no base layers, only overlays)
+        L.control.layers(null, overlayLayers, {
             position: 'topright',
             collapsed: false
         }).addTo(map);
