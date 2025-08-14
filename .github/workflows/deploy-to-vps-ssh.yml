@@ -40,7 +40,17 @@ jobs:
         
     - name: 🔧 Install Composer dependencies for optimization
       run: |
-        composer install --no-dev --optimize-autoloader --no-interaction --prefer-dist
+        # Clear any cached git repositories to avoid conflicts
+        composer clear-cache
+        rm -rf vendor
+        
+        # Install dependencies with fallback for git cache issues
+        if ! composer install --no-dev --optimize-autoloader --no-interaction --prefer-dist; then
+          echo "Composer install failed, trying with fresh cache..."
+          composer clear-cache
+          rm -rf vendor composer.lock
+          composer install --no-dev --optimize-autoloader --no-interaction --prefer-dist
+        fi
         
     - name: 📝 Create production environment file
       run: |
