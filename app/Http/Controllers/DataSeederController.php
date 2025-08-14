@@ -38,7 +38,7 @@ class DataSeederController extends Controller
             ]);
             
             \Artisan::call('db:seed', [
-                '--class' => 'Database\\Seeders\\CollectionSeeder', 
+                '--class' => 'Database\\Seeders\\ComprehensiveCollectionSeeder', 
                 '--force' => true
             ]);
             
@@ -105,7 +105,7 @@ class DataSeederController extends Controller
     {
         try {
             \Artisan::call('db:seed', [
-                '--class' => 'Database\\Seeders\\CollectionSeeder',
+                '--class' => 'Database\\Seeders\\ComprehensiveCollectionSeeder',
                 '--force' => true
             ]);
             

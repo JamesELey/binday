@@ -17,7 +17,7 @@ class DatabaseSeeder extends Seeder
         $this->call([
             AreaSeeder::class,
             UserSeeder::class,
-            CollectionSeeder::class,
+            ComprehensiveCollectionSeeder::class, // Use comprehensive seeder instead
         ]);
         
         $this->command->info('');
@@ -29,8 +29,10 @@ class DatabaseSeeder extends Seeder
         $this->command->info('👤 Customer: customer@binday.com / password123');
         $this->command->info('');
         $this->command->info('🗺️ Demo data includes:');
-        $this->command->info('   • 7 service areas (Eccleshall & Stafford)');
+        $this->command->info('   • 8 service areas (Eccleshall & Stafford)');
         $this->command->info('   • 6 users (admin, workers, customers)');
-        $this->command->info('   • 9 collections (past, current, future)');
+        $this->command->info('   • 800+ collections across 7 days (12-18 per area per day)');
+        $this->command->info('   • Realistic coordinates within area boundaries');
+        $this->command->info('   • Mixed bin types, times, and statuses for route planning');
     }
 }
