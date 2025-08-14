@@ -171,25 +171,23 @@ jobs:
           echo "📦 Installing Composer dependencies..."
           cd "$DEPLOY_PATH"
           
-          # Check PHP version and handle compatibility
+          # Check PHP version 
           PHP_VERSION=$(php -r "echo PHP_VERSION;")
           echo "🐘 Server PHP Version: $PHP_VERSION"
           
-          # Try install first, fallback to update if lock file has compatibility issues
+          # For reliability, always start fresh to avoid git cache issues
+          echo "🧹 Clearing composer cache and starting fresh..."
+          composer clear-cache
+          rm -rf vendor
+          
+          # Install dependencies (will use composer.lock if compatible, otherwise resolve fresh)
           if ! composer install --no-dev --optimize-autoloader --no-interaction --prefer-dist; then
-            echo "⚠️ Lock file compatibility issue detected, updating dependencies for current PHP version..."
-            
-            # Remove vendor and lock file to allow fresh resolution
-            rm -rf vendor
+            echo "⚠️ Lock file incompatible, resolving fresh dependencies..."
             rm -f composer.lock
-            
-            # Update dependencies to match current PHP version
-            composer update --no-dev --optimize-autoloader --no-interaction --prefer-dist
-            
-            echo "✅ Dependencies updated and installed successfully"
-          else
-            echo "✅ Dependencies installed successfully"
+            composer install --no-dev --optimize-autoloader --no-interaction --prefer-dist
           fi
+          
+          echo "✅ Dependencies installed successfully"
           
         ENDSSH
         
