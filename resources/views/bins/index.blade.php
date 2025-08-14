@@ -59,6 +59,7 @@
             <a href="{{ route('collections.index') }}" style="background: #28a745;">📋 View All Collections</a>
             <a href="{{ route('collections.create') }}" style="background: #17a2b8;">➕ Book New Collection</a>
             <a href="{{ route('collections.manage') }}" style="background: #ffc107; color: #212529;">✏️ Edit Collections</a>
+            <a href="{{ route('routes.index') }}" style="background: #dc3545;">🚛 Route Planner</a>
         </div>
         
         <div class="nav-links" style="margin-top: 15px;">
@@ -92,6 +93,17 @@
                     <li><strong>View All Collections:</strong> See complete list of all bookings</li>
                     <li><strong>Book New Collection:</strong> Schedule waste pickup appointments</li>
                     <li><strong>Edit Collections:</strong> Modify existing bookings and update status</li>
+                </ul>
+            </div>
+            
+            <div style="background: #f8f9fa; padding: 20px; border-radius: 8px; border-left: 4px solid #dc3545;">
+                <h3>🚛 Route Planning</h3>
+                <ul>
+                    <li><strong>Optimize Routes:</strong> Plan efficient collection routes using AI algorithms</li>
+                    <li><strong>Worker Dashboard:</strong> View daily collections for assigned areas</li>
+                    <li><strong>Real-time Updates:</strong> Update collection status during route execution</li>
+                    <li><strong>Distance Calculation:</strong> Minimize travel time with smart routing</li>
+                    <li><strong>Interactive Map:</strong> Visual route planning with drag-and-drop optimization</li>
                 </ul>
             </div>
             

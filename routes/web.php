@@ -6,6 +6,7 @@ use App\Http\Controllers\CollectionController;
 use App\Http\Controllers\AllowedAreaController;
 use App\Http\Controllers\DataSeederController;
 use App\Http\Controllers\EnquiryController;
+use App\Http\Controllers\RouteController;
 use App\Http\Controllers\Admin\SettingsController;
 use App\Http\Controllers\Admin\AuthController;
 use App\Http\Controllers\AuthController as PublicAuthController;
@@ -56,6 +57,13 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/collections/{id}/edit', [CollectionController::class, 'edit'])->name('collections.edit');
     Route::put('/collections/{id}', [CollectionController::class, 'update'])->name('collections.update');
     Route::delete('/collections/{id}', [CollectionController::class, 'destroy'])->name('collections.destroy');
+    
+    // Route Planning (Workers and Admins)
+    Route::get('/routes', [RouteController::class, 'index'])->name('routes.index');
+    Route::get('/api/routes/collections', [RouteController::class, 'getCollections'])->name('api.routes.collections');
+    Route::post('/api/routes/optimize', [RouteController::class, 'optimizeRoute'])->name('api.routes.optimize');
+    Route::get('/api/routes/stats', [RouteController::class, 'getRouteStats'])->name('api.routes.stats');
+    Route::put('/api/routes/collections/{id}/status', [RouteController::class, 'updateCollectionStatus'])->name('api.routes.updateStatus');
     
     // Enquiry
     Route::get('/enquiry', [EnquiryController::class, 'create'])->name('enquiry.create');
