@@ -102,6 +102,8 @@ Route::middleware(['role:admin'])->group(function () {
     Route::get('/admin/seed/status', [DataSeederController::class, 'getDataSummary'])->name('seed.status');
 });
 
+
+
 // Legacy admin routes (keeping for compatibility)
 Route::get('/admin/login', [AuthController::class, 'loginForm'])->name('admin.loginForm');
 Route::post('/admin/login', [AuthController::class, 'login'])->name('admin.login');

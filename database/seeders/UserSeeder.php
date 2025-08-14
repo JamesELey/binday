@@ -18,7 +18,7 @@ class UserSeeder extends Seeder
             ['email' => 'admin@binday.com'],
             [
                 'name' => 'System Administrator',
-                'password' => Hash::make('password123'),
+                'password' => 'password123',
                 'role' => 'admin',
                 'active' => true,
                 'phone' => '01785 123456',
@@ -31,7 +31,7 @@ class UserSeeder extends Seeder
             ['email' => 'worker@binday.com'],
             [
                 'name' => 'John Worker',
-                'password' => Hash::make('password123'),
+                'password' => 'password123',
                 'role' => 'worker',
                 'active' => true,
                 'assigned_area_ids' => [1], // Will be assigned to first area
@@ -45,7 +45,7 @@ class UserSeeder extends Seeder
             ['email' => 'customer@binday.com'],
             [
                 'name' => 'Jane Customer',
-                'password' => Hash::make('password123'),
+                'password' => 'password123',
                 'role' => 'customer',
                 'active' => true,
                 'phone' => '01785 345678',
@@ -83,7 +83,7 @@ class UserSeeder extends Seeder
             User::firstOrCreate(
                 ['email' => $userData['email']],
                 array_merge($userData, [
-                    'password' => Hash::make('password123'),
+                    'password' => 'password123',
                     'active' => true,
                 ])
             );
