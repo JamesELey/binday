@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
 use App\Services\PostcodePolygonService;
+use App\Area;
 
 class AllowedAreaController extends Controller
 {
@@ -13,7 +14,7 @@ class AllowedAreaController extends Controller
      */
     public function index()
     {
-        $areas = $this->getAllAreas();
+        $areas = Area::all();
         return view('areas.index', compact('areas'));
     }
 
@@ -432,24 +433,24 @@ class AllowedAreaController extends Controller
      */
     public function apiList(): JsonResponse
     {
-        $areas = $this->getAllAreas();
+        $areas = Area::active()->get();
         $apiAreas = [];
         
         foreach ($areas as $area) {
             $apiArea = [
-                'id' => $area['id'],
-                'name' => $area['name'],
-                'description' => $area['description'],
-                'active' => $area['active'],
-                'type' => $area['type'],
-                'bin_types' => $area['bin_types'] ?? \App\Http\Controllers\BinScheduleController::getDefaultBinTypes(),
-                'created_at' => $area['created_at']
+                'id' => $area->id,
+                'name' => $area->name,
+                'description' => $area->description,
+                'active' => $area->active,
+                'type' => $area->type,
+                'bin_types' => $area->bin_types ?? Area::getDefaultBinTypes(),
+                'created_at' => $area->created_at->format('Y-m-d H:i:s')
             ];
             
-            if ($area['type'] === 'postcode' && !empty($area['postcodes'])) {
-                $apiArea['postcodes'] = explode(', ', $area['postcodes']);
-            } elseif ($area['type'] === 'map' && !empty($area['coordinates'])) {
-                $apiArea['coordinates'] = $area['coordinates'];
+            if ($area->type === 'postcode' && !empty($area->postcodes)) {
+                $apiArea['postcodes'] = explode(', ', $area->postcodes);
+            } elseif ($area->type === 'polygon' && !empty($area->coordinates)) {
+                $apiArea['coordinates'] = $area->coordinates;
             }
             
             $apiAreas[] = $apiArea;
@@ -545,24 +546,19 @@ class AllowedAreaController extends Controller
      */
     private function isPointInAllowedAreas($lat, $lng): bool
     {
-        $areas = $this->getAllAreas();
+        $areas = Area::active()->get();
         
         foreach ($areas as $area) {
-            // Skip inactive areas
-            if (!$area['active']) {
-                continue;
-            }
-            
-            // Check map-based areas with coordinates
-            if ($area['type'] === 'map' && !empty($area['coordinates'])) {
-                if ($this->isPointInPolygon($lat, $lng, $area['coordinates'])) {
+            // Check polygon-based areas with coordinates
+            if ($area->type === 'polygon' && !empty($area->coordinates)) {
+                if ($this->isPointInPolygon($lat, $lng, $area->coordinates)) {
                     return true;
                 }
             }
             
             // Check postcode-based areas
-            if ($area['type'] === 'postcode' && !empty($area['postcodes'])) {
-                if ($this->isPointInPostcodeArea($lat, $lng, $area['postcodes'])) {
+            if ($area->type === 'postcode' && !empty($area->postcodes)) {
+                if ($this->isPointInPostcodeArea($lat, $lng, $area->postcodes)) {
                     return true;
                 }
             }

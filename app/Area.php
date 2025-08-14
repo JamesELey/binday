@@ -60,7 +60,7 @@ class Area extends Model
      */
     public function assignedWorkers()
     {
-        return User::where('role', 'worker')
+        return \App\User::where('role', 'worker')
                    ->whereJsonContains('assigned_area_ids', $this->id)
                    ->get();
     }

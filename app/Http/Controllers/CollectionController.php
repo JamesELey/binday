@@ -4,6 +4,8 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
+use App\Collection;
+use App\Area;
 
 class CollectionController extends Controller
 {
@@ -12,47 +14,17 @@ class CollectionController extends Controller
      */
     public function index()
     {
-        $collections = $this->getAllCollections();
+        $collections = Collection::with(['area', 'user'])->orderBy('collection_date', 'asc')->get();
         return view('collections.index', compact('collections'));
     }
 
     /**
-     * Get all collections from storage
+     * Get all collections from database (legacy method - kept for backward compatibility)
      */
     private function getAllCollections(): array
     {
-        $storagePath = storage_path('app/collections.json');
-        
-        if (!file_exists($storagePath)) {
-            return [];
-        }
-        
-        $data = file_get_contents($storagePath);
-        return json_decode($data, true) ?: [];
-    }
-
-    /**
-     * Save collections to storage
-     */
-    private function saveCollections(array $collections): void
-    {
-        $storagePath = storage_path('app/collections.json');
-        file_put_contents($storagePath, json_encode($collections, JSON_PRETTY_PRINT));
-    }
-
-    /**
-     * Get next available ID
-     */
-    private function getNextCollectionId(): int
-    {
-        $collections = $this->getAllCollections();
-        $maxId = 0;
-        foreach ($collections as $collection) {
-            if ($collection['id'] > $maxId) {
-                $maxId = $collection['id'];
-            }
-        }
-        return $maxId + 1;
+        // This method is kept for backward compatibility but now uses database
+        return Collection::all()->toArray();
     }
 
     /**
@@ -60,21 +32,21 @@ class CollectionController extends Controller
      */
     public function create()
     {
-        // Get all areas to show available bin types
-        $areas = $this->getAllowedAreas();
+        // Get all active areas to show available bin types
+        $areas = Area::active()->get();
         
         // Get all possible bin types from all areas
         $allBinTypes = [];
         foreach ($areas as $area) {
-            if (!empty($area['bin_types'])) {
-                $allBinTypes = array_merge($allBinTypes, $area['bin_types']);
+            if (!empty($area->bin_types)) {
+                $allBinTypes = array_merge($allBinTypes, $area->bin_types);
             }
         }
         $allBinTypes = array_unique($allBinTypes);
         
         // If no area-specific bin types, use defaults
         if (empty($allBinTypes)) {
-            $allBinTypes = \App\Http\Controllers\BinScheduleController::getDefaultBinTypes();
+            $allBinTypes = Area::getDefaultBinTypes();
         }
         
         return view('collections.create', compact('allBinTypes', 'areas'));
@@ -86,41 +58,35 @@ class CollectionController extends Controller
     public function store(Request $request)
     {
         // Validate the request
-        $request->validate([
+        $validated = $request->validate([
             'customer_name' => 'required|string|max:255',
-            'phone' => 'required|string|max:20',
-            'address' => 'required|string',
-            'bin_type' => 'required|string',
+            'customer_email' => 'required|email|max:255',
+            'phone' => 'nullable|string|max:20',
+            'address' => 'required|string|max:500',
+            'bin_type' => 'required|string|max:50',
             'collection_date' => 'required|date|after_or_equal:today',
+            'collection_time' => 'nullable|date_format:H:i',
+            'notes' => 'nullable|string|max:1000',
         ]);
 
         // Check if address is within allowed areas
-        $address = $request->input('address');
-        $postcode = $this->extractPostcode($address);
+        $address = $validated['address'];
+        $area = Area::active()->get()->first(function ($area) use ($address) {
+            return $area->containsAddress($address);
+        });
         
-        if (!$this->isInAllowedArea($postcode)) {
+        if (!$area) {
             return back()->withInput()->with('area_error', 
                 'Sorry, we don\'t currently provide services to this area. Please contact us at enquiries@thebinday.co.uk for more information about coverage in your area.'
             );
         }
 
-        // Save the collection
-        $collections = $this->getAllCollections();
-        $newCollection = [
-            'id' => $this->getNextCollectionId(),
-            'customer_name' => $request->input('customer_name'),
-            'phone' => $request->input('phone'),
-            'address' => $request->input('address'),
-            'bin_type' => $request->input('bin_type'),
-            'collection_date' => $request->input('collection_date'),
-            'collection_time' => $request->input('collection_time', '08:00'),
-            'status' => $request->input('status', 'Scheduled'),
-            'notes' => $request->input('notes', ''),
-            'created_at' => date('Y-m-d H:i:s')
-        ];
-        
-        $collections[] = $newCollection;
-        $this->saveCollections($collections);
+        // Create the collection
+        $collection = Collection::create(array_merge($validated, [
+            'status' => Collection::STATUS_PENDING,
+            'user_id' => auth()->id(),
+            'area_id' => $area->id,
+        ]));
         
         return redirect()->route('collections.index')
             ->with('success', 'Collection booked successfully!');
@@ -163,7 +129,26 @@ class CollectionController extends Controller
      */
     public function manage()
     {
-        $collections = $this->getAllCollections();
+        $user = auth()->user();
+        
+        // Get collections based on user role
+        if ($user->isAdmin()) {
+            $collections = Collection::with(['area', 'user'])->orderBy('collection_date', 'asc')->get();
+        } elseif ($user->isWorker()) {
+            // Workers can only see collections in their assigned areas
+            $areaIds = $user->getManageableAreaIds();
+            $collections = Collection::with(['area', 'user'])
+                ->whereIn('area_id', $areaIds)
+                ->orderBy('collection_date', 'asc')
+                ->get();
+        } else {
+            // Customers can only see their own collections
+            $collections = Collection::with(['area'])
+                ->where('customer_email', $user->email)
+                ->orderBy('collection_date', 'asc')
+                ->get();
+        }
+        
         return view('collections.manage', compact('collections'));
     }
 
@@ -172,20 +157,19 @@ class CollectionController extends Controller
      */
     public function edit($id)
     {
-        // Sample collection data
-        $collection = [
-            'id' => $id,
-            'address' => '123 Main Street',
-            'bin_type' => 'Residual Waste',
-            'collection_date' => '2025-01-20',
-            'collection_time' => '08:00',
-            'status' => 'Scheduled',
-            'customer_name' => 'John Smith',
-            'phone' => '07123456789',
-            'notes' => 'Leave bin at front gate'
-        ];
+        $collection = Collection::with(['area', 'user'])->findOrFail($id);
+        
+        // Check if user can edit this collection
+        $user = auth()->user();
+        if (!$collection->canBeEditedBy($user)) {
+            return redirect()->route('collections.manage')
+                ->with('error', 'You do not have permission to edit this collection.');
+        }
+        
+        // Get available bin types from the collection's area
+        $binTypes = $collection->area ? $collection->area->bin_types : Area::getDefaultBinTypes();
 
-        return view('collections.edit', compact('collection'));
+        return view('collections.edit', compact('collection', 'binTypes'));
     }
 
     /**
@@ -193,8 +177,31 @@ class CollectionController extends Controller
      */
     public function update(Request $request, $id)
     {
-        // In a real application, you would validate and update in database
-        // For now, just redirect back with success message
+        $collection = Collection::findOrFail($id);
+        
+        // Check if user can edit this collection
+        $user = auth()->user();
+        if (!$collection->canBeEditedBy($user)) {
+            return redirect()->route('collections.manage')
+                ->with('error', 'You do not have permission to edit this collection.');
+        }
+        
+        // Validate the request
+        $validated = $request->validate([
+            'customer_name' => 'required|string|max:255',
+            'customer_email' => 'required|email|max:255',
+            'phone' => 'nullable|string|max:20',
+            'address' => 'required|string|max:500',
+            'bin_type' => 'required|string|max:50',
+            'collection_date' => 'required|date',
+            'collection_time' => 'nullable|date_format:H:i',
+            'status' => 'required|in:pending,confirmed,collected,cancelled',
+            'notes' => 'nullable|string|max:1000',
+        ]);
+
+        // Update the collection
+        $collection->update($validated);
+        
         return redirect()->route('collections.manage')
             ->with('success', 'Collection updated successfully!');
     }
@@ -204,23 +211,27 @@ class CollectionController extends Controller
      */
     public function destroy($id)
     {
-        // In a real application, you would delete from database
-        // For now, just redirect back with success message
+        $collection = Collection::findOrFail($id);
+        
+        // Check if user can edit this collection
+        $user = auth()->user();
+        if (!$collection->canBeEditedBy($user)) {
+            return redirect()->route('collections.manage')
+                ->with('error', 'You do not have permission to delete this collection.');
+        }
+
+        $collection->delete();
+        
         return redirect()->route('collections.manage')
             ->with('success', 'Collection deleted successfully!');
     }
 
     /**
-     * Get all allowed areas for bin type determination
+     * Get all allowed areas for bin type determination (legacy method)
      */
     private function getAllowedAreas(): array
     {
-        $storagePath = storage_path('app/allowed_areas.json');
-        if (!file_exists($storagePath)) {
-            return [];
-        }
-        
-        $json = file_get_contents($storagePath);
-        return json_decode($json, true) ?: [];
+        // This method is kept for backward compatibility but now uses database
+        return Area::active()->get()->toArray();
     }
 }

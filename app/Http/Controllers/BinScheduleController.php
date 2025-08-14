@@ -4,6 +4,8 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
+use App\Collection;
+use App\Area;
 
 class BinScheduleController extends Controller
 {
@@ -36,30 +38,25 @@ class BinScheduleController extends Controller
      */
     public function apiAll(): JsonResponse
     {
-        // Load collections from JSON file
-        $collections = $this->getCollections();
+        // Load collections from database
+        $collections = Collection::with('area')->get();
         $bins = [];
         
         foreach ($collections as $collection) {
-            // Get coordinates for the address
-            $coordinates = $this->getCoordinatesForAddress($collection['address']);
-            
-            // Determine color based on bin type
-            $color = $this->getBinTypeColor($collection['bin_type']);
-            
             $bins[] = [
-                'id' => $collection['id'],
-                'customer_name' => $collection['customer_name'],
-                'phone' => $collection['phone'],
-                'address' => $collection['address'],
-                'bin_type' => $collection['bin_type'],
-                'collection_date' => $collection['collection_date'],
-                'collection_time' => $collection['collection_time'],
-                'status' => $collection['status'],
-                'notes' => $collection['notes'] ?? '',
-                'latitude' => $coordinates['lat'],
-                'longitude' => $coordinates['lng'],
-                'color' => $color
+                'id' => $collection->id,
+                'customer_name' => $collection->customer_name,
+                'phone' => $collection->phone,
+                'address' => $collection->address,
+                'bin_type' => $collection->bin_type,
+                'collection_date' => $collection->collection_date->format('Y-m-d'),
+                'collection_time' => $collection->collection_time ? $collection->collection_time->format('H:i') : null,
+                'status' => $collection->status,
+                'notes' => $collection->notes ?? '',
+                'latitude' => $collection->latitude ?? $this->getCoordinatesForAddress($collection->address)['lat'],
+                'longitude' => $collection->longitude ?? $this->getCoordinatesForAddress($collection->address)['lng'],
+                'color' => $collection->getBinTypeColor(),
+                'area_name' => $collection->area->name ?? 'Unknown'
             ];
         }
 
@@ -67,18 +64,12 @@ class BinScheduleController extends Controller
     }
 
     /**
-     * Get collections from JSON file
+     * Get collections from database (legacy method - kept for backward compatibility)
      */
     private function getCollections(): array
     {
-        $storagePath = storage_path('app/collections.json');
-        
-        if (!file_exists($storagePath)) {
-            return [];
-        }
-        
-        $data = file_get_contents($storagePath);
-        return json_decode($data, true) ?: [];
+        // This method is kept for backward compatibility but now uses database
+        return Collection::all()->toArray();
     }
 
     /**
@@ -207,8 +198,24 @@ class BinScheduleController extends Controller
      */
     public function store(Request $request)
     {
-        // Implementation would go here
-        return redirect()->route('bins.index')->with('success', 'Bin schedule created successfully!');
+        $validated = $request->validate([
+            'customer_name' => 'required|string|max:255',
+            'customer_email' => 'required|email|max:255',
+            'phone' => 'nullable|string|max:20',
+            'address' => 'required|string|max:500',
+            'bin_type' => 'required|string|max:50',
+            'collection_date' => 'required|date|after_or_equal:today',
+            'collection_time' => 'nullable|date_format:H:i',
+            'notes' => 'nullable|string|max:1000',
+        ]);
+
+        // Create the collection
+        $collection = Collection::create(array_merge($validated, [
+            'status' => Collection::STATUS_PENDING,
+            'user_id' => auth()->id(),
+        ]));
+
+        return redirect()->route('bins.index')->with('success', 'Bin collection scheduled successfully!');
     }
 
     /**
