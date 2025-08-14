@@ -10,16 +10,36 @@ use App\Http\Controllers\Admin\SettingsController;
 use App\Http\Controllers\Admin\AuthController;
 use App\Http\Controllers\AuthController as PublicAuthController;
 
-// Public routes (no authentication required)
-Route::get('/', [BinScheduleController::class, 'index'])->name('bins.index');
-Route::get('/bins/map', [BinScheduleController::class, 'map'])->name('bins.map');
-Route::get('/bins/map-by-date', [BinScheduleController::class, 'mapByDate'])->name('bins.mapByDate');
-Route::get('/api/bins', [BinScheduleController::class, 'apiAll'])->name('api.bins');
-Route::get('/api/areas', [AllowedAreaController::class, 'apiList'])->name('api.areas');
-Route::get('/api/lookup', [BinScheduleController::class, 'lookup'])->name('api.lookup');
+// Authentication routes (accessible to guests)
+Route::get('/login', [\App\Http\Controllers\Auth\AuthController::class, 'showLogin'])->name('login');
+Route::post('/login', [\App\Http\Controllers\Auth\AuthController::class, 'login']);
+Route::get('/register', [\App\Http\Controllers\Auth\AuthController::class, 'showRegister'])->name('register');
+Route::post('/register', [\App\Http\Controllers\Auth\AuthController::class, 'register']);
 
-// Protected routes (authentication required)
+// Logout route (for authenticated users only)
+Route::post('/logout', [\App\Http\Controllers\Auth\AuthController::class, 'logout'])->name('logout')->middleware('auth');
+
+// Redirect root to login for guests, or dashboard for authenticated users
+Route::get('/', function () {
+    if (auth()->check()) {
+        return redirect()->route('bins.index');
+    }
+    return redirect()->route('login');
+});
+
+// All other routes require authentication
 Route::middleware(['auth'])->group(function () {
+    // Homepage and main navigation
+    Route::get('/home', [BinScheduleController::class, 'index'])->name('bins.index');
+    Route::get('/bins/map', [BinScheduleController::class, 'map'])->name('bins.map');
+    Route::get('/bins/map-by-date', [BinScheduleController::class, 'mapByDate'])->name('bins.mapByDate');
+    
+    // API endpoints
+    Route::get('/api/bins', [BinScheduleController::class, 'apiAll'])->name('api.bins');
+    Route::get('/api/areas', [AllowedAreaController::class, 'apiList'])->name('api.areas');
+    Route::get('/api/lookup', [BinScheduleController::class, 'lookup'])->name('api.lookup');
+    
+    // Bin management routes
     Route::get('/bins/create', [BinScheduleController::class, 'create'])->name('bins.create');
     Route::post('/bins', [BinScheduleController::class, 'store'])->name('bins.store');
     Route::delete('/bins/{bin}', [BinScheduleController::class, 'destroy'])->name('bins.destroy');
@@ -27,6 +47,27 @@ Route::middleware(['auth'])->group(function () {
     Route::put('/bins/{bin}', [BinScheduleController::class, 'update'])->name('bins.update');
     Route::post('/bins/geocode-all', [BinScheduleController::class, 'geocodeAll'])->name('bins.geocodeAll');
     Route::get('/bins/geocode-all', [BinScheduleController::class, 'geocodeAll'])->name('bins.geocodeAll.get');
+    
+    // Collection Management Routes
+    Route::get('/collections', [CollectionController::class, 'index'])->name('collections.index');
+    Route::get('/collections/create', [CollectionController::class, 'create'])->name('collections.create');
+    Route::post('/collections', [CollectionController::class, 'store'])->name('collections.store');
+    Route::get('/collections/manage', [CollectionController::class, 'manage'])->name('collections.manage');
+    Route::get('/collections/{id}/edit', [CollectionController::class, 'edit'])->name('collections.edit');
+    Route::put('/collections/{id}', [CollectionController::class, 'update'])->name('collections.update');
+    Route::delete('/collections/{id}', [CollectionController::class, 'destroy'])->name('collections.destroy');
+    
+    // Enquiry
+    Route::get('/enquiry', [EnquiryController::class, 'create'])->name('enquiry.create');
+    Route::post('/enquiry', [EnquiryController::class, 'store'])->name('enquiry.store');
+});
+
+// Role-based dashboards (requires authentication)
+Route::middleware(['role'])->group(function () {
+    Route::get('/dashboard', [\App\Http\Controllers\Auth\AuthController::class, 'dashboard'])->name('dashboard');
+    Route::get('/admin/dashboard', [\App\Http\Controllers\Auth\AuthController::class, 'dashboard'])->name('admin.dashboard');
+    Route::get('/worker/dashboard', [\App\Http\Controllers\Auth\AuthController::class, 'dashboard'])->name('worker.dashboard');
+    Route::get('/customer/dashboard', [\App\Http\Controllers\Auth\AuthController::class, 'dashboard'])->name('customer.dashboard');
 });
 
 // Areas management (Admin/Worker only)
@@ -51,48 +92,6 @@ Route::middleware(['role:admin,worker'])->group(function () {
     Route::post('/areas/convert-all-postcodes', [AllowedAreaController::class, 'convertAllPostcodeAreas'])->name('areas.convertAllPostcodes');
 });
 
-// Enquiry
-Route::get('/enquiry', [EnquiryController::class, 'create'])->name('enquiry.create');
-Route::post('/enquiry', [EnquiryController::class, 'store'])->name('enquiry.store');
-
-// Admin settings
-Route::get('/admin/login', [AuthController::class, 'loginForm'])->name('admin.loginForm');
-Route::post('/admin/login', [AuthController::class, 'login'])->name('admin.login');
-Route::post('/admin/logout', [AuthController::class, 'logout'])->name('admin.logout');
-
-Route::middleware(['admin'])->group(function () {
-    Route::get('/admin/settings', [SettingsController::class, 'edit'])->name('admin.settings');
-    Route::put('/admin/settings', [SettingsController::class, 'update'])->name('admin.settings.update');
-    Route::post('/admin/seed-demo', [SettingsController::class, 'seedDemo'])->name('admin.seedDemo');
-    Route::post('/admin/clear-schedules', [SettingsController::class, 'clearSchedules'])->name('admin.clearSchedules');
-});
-
-// Authentication routes
-Route::get('/login', [\App\Http\Controllers\Auth\AuthController::class, 'showLogin'])->name('login');
-Route::post('/login', [\App\Http\Controllers\Auth\AuthController::class, 'login']);
-Route::get('/register', [\App\Http\Controllers\Auth\AuthController::class, 'showRegister'])->name('register');
-Route::post('/register', [\App\Http\Controllers\Auth\AuthController::class, 'register']);
-Route::post('/logout', [\App\Http\Controllers\Auth\AuthController::class, 'logout'])->name('logout');
-
-// Role-based dashboards (requires authentication)
-Route::middleware(['role'])->group(function () {
-    Route::get('/dashboard', [\App\Http\Controllers\Auth\AuthController::class, 'dashboard'])->name('dashboard');
-    Route::get('/admin/dashboard', [\App\Http\Controllers\Auth\AuthController::class, 'dashboard'])->name('admin.dashboard');
-    Route::get('/worker/dashboard', [\App\Http\Controllers\Auth\AuthController::class, 'dashboard'])->name('worker.dashboard');
-    Route::get('/customer/dashboard', [\App\Http\Controllers\Auth\AuthController::class, 'dashboard'])->name('customer.dashboard');
-});
-
-// Collection Management Routes (Authentication required)
-Route::middleware(['auth'])->group(function () {
-    Route::get('/collections', [CollectionController::class, 'index'])->name('collections.index');
-    Route::get('/collections/create', [CollectionController::class, 'create'])->name('collections.create');
-    Route::post('/collections', [CollectionController::class, 'store'])->name('collections.store');
-    Route::get('/collections/manage', [CollectionController::class, 'manage'])->name('collections.manage');
-    Route::get('/collections/{id}/edit', [CollectionController::class, 'edit'])->name('collections.edit');
-    Route::put('/collections/{id}', [CollectionController::class, 'update'])->name('collections.update');
-    Route::delete('/collections/{id}', [CollectionController::class, 'destroy'])->name('collections.destroy');
-});
-
 // Data Seeding Routes (Admin only)
 Route::middleware(['role:admin'])->group(function () {
     Route::get('/admin/seed', [DataSeederController::class, 'index'])->name('seed.index');
@@ -103,58 +102,14 @@ Route::middleware(['role:admin'])->group(function () {
     Route::get('/admin/seed/status', [DataSeederController::class, 'getDataSummary'])->name('seed.status');
 });
 
-// Test route for form postcode area creation
-Route::post('/test-postcode-form', function(\Illuminate\Http\Request $request) {
-    \Log::info('Test postcode form submission', [
-        'all_data' => $request->all(),
-        'method' => $request->method(),
-        'is_json' => $request->isJson(),
-        'content_type' => $request->header('Content-Type')
-    ]);
-    
-    try {
-        $validated = $request->validate([
-            'name' => 'required|string|max:255',
-            'postcodes' => 'required|string|min:2',
-            'active' => 'required|in:0,1',
-            'description' => 'nullable|string|max:500'
-        ]);
-        
-        \Log::info('Validation passed', ['validated' => $validated]);
-        
-        return response()->json(['success' => true, 'validated' => $validated]);
-        
-    } catch (\Exception $e) {
-        \Log::error('Validation failed', ['error' => $e->getMessage()]);
-        return response()->json(['error' => $e->getMessage()], 400);
-    }
-});
+// Legacy admin routes (keeping for compatibility)
+Route::get('/admin/login', [AuthController::class, 'loginForm'])->name('admin.loginForm');
+Route::post('/admin/login', [AuthController::class, 'login'])->name('admin.login');
+Route::post('/admin/logout', [AuthController::class, 'logout'])->name('admin.logout');
 
-// Test route for postcode area creation
-Route::get('/test-postcode-area', function() {
-    $areas = json_decode(file_get_contents(storage_path('app/allowed_areas.json')), true) ?: [];
-    
-    $newArea = [
-        'id' => count($areas) + 1,
-        'name' => 'Test Postcode Area',
-        'description' => 'Test area created programmatically',
-        'postcodes' => 'SW1, SW2, SW3',
-        'active' => true,
-        'type' => 'postcode',
-        'coordinates' => null,
-        'bin_types' => ['Food', 'Recycling', 'Garden'],
-        'created_at' => date('Y-m-d H:i:s'),
-        'updated_at' => date('Y-m-d H:i:s')
-    ];
-    
-    $areas[] = $newArea;
-    
-    file_put_contents(storage_path('app/allowed_areas.json'), json_encode($areas, JSON_PRETTY_PRINT));
-    
-    return response()->json([
-        'success' => true,
-        'message' => 'Test postcode area created',
-        'area' => $newArea,
-        'total_areas' => count($areas)
-    ]);
+Route::middleware(['admin'])->group(function () {
+    Route::get('/admin/settings', [SettingsController::class, 'edit'])->name('admin.settings');
+    Route::put('/admin/settings', [SettingsController::class, 'update'])->name('admin.settings.update');
+    Route::post('/admin/seed-demo', [SettingsController::class, 'seedDemo'])->name('admin.seedDemo');
+    Route::post('/admin/clear-schedules', [SettingsController::class, 'clearSchedules'])->name('admin.clearSchedules');
 });

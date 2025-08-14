@@ -3,13 +3,13 @@
         
         <!-- Left side - App branding -->
         <div style="display: flex; align-items: center;">
-            <a href="{{ url('/') }}" style="text-decoration: none; color: #007bff; font-weight: bold; font-size: 18px; margin-right: 30px;">
+            <a href="{{ route('bins.index') }}" style="text-decoration: none; color: #007bff; font-weight: bold; font-size: 18px; margin-right: 30px;">
                 🗑️ BinDay
             </a>
             
             <!-- Main navigation links -->
             <div style="display: flex; gap: 20px;">
-                <a href="{{ url('/') }}" style="text-decoration: none; color: #6c757d; padding: 5px 10px; border-radius: 4px; transition: all 0.3s;">
+                <a href="{{ route('bins.index') }}" style="text-decoration: none; color: #6c757d; padding: 5px 10px; border-radius: 4px; transition: all 0.3s;">
                     🏠 Home
                 </a>
                 <a href="{{ url('/bins/map') }}" style="text-decoration: none; color: #6c757d; padding: 5px 10px; border-radius: 4px; transition: all 0.3s;">
