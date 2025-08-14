@@ -65,12 +65,20 @@ Route::middleware(['admin'])->group(function () {
     Route::post('/admin/clear-schedules', [SettingsController::class, 'clearSchedules'])->name('admin.clearSchedules');
 });
 
-// Public auth routes (default all users admin on login/register)
-Route::get('/login', [PublicAuthController::class, 'showLogin'])->name('login');
-Route::post('/login', [PublicAuthController::class, 'login'])->name('login.post');
-Route::get('/register', [PublicAuthController::class, 'showRegister'])->name('register');
-Route::post('/register', [PublicAuthController::class, 'register'])->name('register.post');
-Route::post('/logout', [PublicAuthController::class, 'logout'])->name('logout');
+// Authentication routes
+Route::get('/login', [\App\Http\Controllers\Auth\AuthController::class, 'showLogin'])->name('login');
+Route::post('/login', [\App\Http\Controllers\Auth\AuthController::class, 'login']);
+Route::get('/register', [\App\Http\Controllers\Auth\AuthController::class, 'showRegister'])->name('register');
+Route::post('/register', [\App\Http\Controllers\Auth\AuthController::class, 'register']);
+Route::post('/logout', [\App\Http\Controllers\Auth\AuthController::class, 'logout'])->name('logout');
+
+// Role-based dashboards (requires authentication)
+Route::middleware(['role'])->group(function () {
+    Route::get('/dashboard', [\App\Http\Controllers\Auth\AuthController::class, 'dashboard'])->name('dashboard');
+    Route::get('/admin/dashboard', [\App\Http\Controllers\Auth\AuthController::class, 'dashboard'])->name('admin.dashboard');
+    Route::get('/worker/dashboard', [\App\Http\Controllers\Auth\AuthController::class, 'dashboard'])->name('worker.dashboard');
+    Route::get('/customer/dashboard', [\App\Http\Controllers\Auth\AuthController::class, 'dashboard'])->name('customer.dashboard');
+});
 
 // Collection Management Routes
 Route::get('/collections', [CollectionController::class, 'index'])->name('collections.index');
@@ -81,13 +89,15 @@ Route::get('/collections/{id}/edit', [CollectionController::class, 'edit'])->nam
 Route::put('/collections/{id}', [CollectionController::class, 'update'])->name('collections.update');
 Route::delete('/collections/{id}', [CollectionController::class, 'destroy'])->name('collections.destroy');
 
-// Data Seeding Routes
-Route::get('/admin/seed', [DataSeederController::class, 'index'])->name('seed.index');
-Route::post('/admin/seed/all', [DataSeederController::class, 'seedAll'])->name('seed.all');
-Route::delete('/admin/seed/delete', [DataSeederController::class, 'deleteAll'])->name('seed.delete');
-Route::post('/admin/seed/eccleshall', [DataSeederController::class, 'seedEccleshallAreaOnly'])->name('seed.eccleshall');
-Route::post('/admin/seed/collections', [DataSeederController::class, 'seedCollectionsOnly'])->name('seed.collections');
-Route::get('/admin/seed/status', [DataSeederController::class, 'getDataSummary'])->name('seed.status');
+// Data Seeding Routes (Admin only)
+Route::middleware(['role:admin'])->group(function () {
+    Route::get('/admin/seed', [DataSeederController::class, 'index'])->name('seed.index');
+    Route::post('/admin/seed/all', [DataSeederController::class, 'seedAll'])->name('seed.all');
+    Route::delete('/admin/seed/delete', [DataSeederController::class, 'deleteAll'])->name('seed.delete');
+    Route::post('/admin/seed/eccleshall', [DataSeederController::class, 'seedEccleshallAreaOnly'])->name('seed.eccleshall');
+    Route::post('/admin/seed/collections', [DataSeederController::class, 'seedCollectionsOnly'])->name('seed.collections');
+    Route::get('/admin/seed/status', [DataSeederController::class, 'getDataSummary'])->name('seed.status');
+});
 
 // Test route for form postcode area creation
 Route::post('/test-postcode-form', function(\Illuminate\Http\Request $request) {
