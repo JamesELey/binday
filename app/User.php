@@ -174,4 +174,24 @@ class User extends Authenticatable
     {
         return $query->where('active', true);
     }
+
+    /**
+     * Get collections created by this user
+     */
+    public function collections()
+    {
+        return $this->hasMany(Collection::class);
+    }
+
+    /**
+     * Get areas assigned to this worker
+     */
+    public function assignedAreas()
+    {
+        if ($this->role !== 'worker' || empty($this->assigned_area_ids)) {
+            return collect();
+        }
+
+        return Area::whereIn('id', $this->assigned_area_ids)->get();
+    }
 }
