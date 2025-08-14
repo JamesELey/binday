@@ -234,7 +234,7 @@
             </form>
         </div>
 
-        @if(count(array_filter($areas, fn($a) => $a['type'] === 'postcode')) > 0)
+        @if($areas->where('type', 'postcode')->count() > 0)
             <div style="background: #e0f2fe; padding: 20px; border-radius: 8px; margin-bottom: 30px; border-left: 4px solid #0288d1;">
                 <h3 style="margin-top: 0; color: #01579b;">🗺️ Convert Postcode Areas to Polygons</h3>
                 <p style="margin-bottom: 15px; color: #0277bd;">
@@ -246,7 +246,7 @@
                         🔄 Convert All Postcode Areas
                     </button>
                     <span style="color: #0277bd; font-size: 14px;">
-                        {{ count(array_filter($areas, fn($a) => $a['type'] === 'postcode')) }} postcode area(s) available for conversion
+                        {{ $areas->where('type', 'postcode')->count() }} postcode area(s) available for conversion
                     </span>
                 </div>
             </div>
@@ -277,38 +277,38 @@
             <tbody>
                 @foreach($areas as $area)
                 <tr>
-                    <td>#{{ $area['id'] }}</td>
-                    <td><strong>{{ $area['name'] }}</strong></td>
+                    <td>#{{ $area->id }}</td>
+                    <td><strong>{{ $area->name }}</strong></td>
                     <td>
-                        @if($area['type'] === 'map')
+                        @if($area->type === 'polygon')
                             <span style="background: #17a2b8; color: white; padding: 2px 6px; border-radius: 3px; font-size: 11px;">🗺️ Map</span>
                         @else
                             <span style="background: #6c757d; color: white; padding: 2px 6px; border-radius: 3px; font-size: 11px;">📮 Postcode</span>
                         @endif
                     </td>
                     <td>
-                        @if($area['type'] === 'map')
-                            <small style="color: #6c757d;">{{ count($area['coordinates'] ?? []) }} coordinate points</small>
+                        @if($area->type === 'polygon')
+                            <small style="color: #6c757d;">{{ count($area->coordinates ?? []) }} coordinate points</small>
                         @else
-                            <code style="font-size: 11px;">{{ $area['postcodes'] ?? 'No postcodes' }}</code>
+                            <code style="font-size: 11px;">{{ $area->postcodes ?? 'No postcodes' }}</code>
                         @endif
                     </td>
-                    <td>{{ $area['description'] ?: 'No description' }}</td>
+                    <td>{{ $area->description ?: 'No description' }}</td>
                     <td>
-                        <span class="status-badge status-{{ $area['active'] ? 'active' : 'inactive' }}">
-                            {{ $area['active'] ? 'Active' : 'Inactive' }}
+                        <span class="status-badge status-{{ $area->active ? 'active' : 'inactive' }}">
+                            {{ $area->active ? 'Active' : 'Inactive' }}
                         </span>
                     </td>
-                    <td>{{ date('M j, Y', strtotime($area['created_at'])) }}</td>
+                    <td>{{ $area->created_at->format('M j, Y') }}</td>
                     <td>
                         <div class="action-buttons">
-                            <a href="{{ route('areas.edit', $area['id']) }}" class="btn btn-edit">✏️ Edit</a>
-                            <a href="{{ route('areas.manageBinTypes', $area['id']) }}" class="btn btn-edit" style="background: #10b981;">🗂️ Bin Types</a>
-                            @if($area['type'] === 'postcode')
-                                <button onclick="previewPolygon({{ $area['id'] }})" class="btn btn-edit" style="background: #8b5cf6;">👁️ Preview</button>
-                                <button onclick="convertToPolygon({{ $area['id'] }})" class="btn btn-edit" style="background: #f59e0b;">🗺️ Convert</button>
+                            <a href="{{ route('areas.edit', $area->id) }}" class="btn btn-edit">✏️ Edit</a>
+                            <a href="{{ route('areas.manageBinTypes', $area->id) }}" class="btn btn-edit" style="background: #10b981;">🗂️ Bin Types</a>
+                            @if($area->type === 'postcode')
+                                <button onclick="previewPolygon({{ $area->id }})" class="btn btn-edit" style="background: #8b5cf6;">👁️ Preview</button>
+                                <button onclick="convertToPolygon({{ $area->id }})" class="btn btn-edit" style="background: #f59e0b;">🗺️ Convert</button>
                             @endif
-                            <form action="{{ route('areas.destroy', $area['id']) }}" method="POST" style="display: inline;" onsubmit="return confirm('Are you sure you want to delete this area?');">
+                            <form action="{{ route('areas.destroy', $area->id) }}" method="POST" style="display: inline;" onsubmit="return confirm('Are you sure you want to delete this area?');">
                                 @csrf
                                 @method('DELETE')
                                 <button type="submit" class="btn btn-delete">🗑️ Delete</button>
@@ -324,22 +324,22 @@
             <h3>📊 Area Coverage Summary</h3>
             <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px;">
                 <div>
-                    <strong>Total Areas:</strong> {{ count($areas) }}
+                    <strong>Total Areas:</strong> {{ $areas->count() }}
                 </div>
                 <div>
-                    <strong>Active Areas:</strong> {{ count(array_filter($areas, fn($a) => $a['active'])) }}
+                    <strong>Active Areas:</strong> {{ $areas->where('active', true)->count() }}
                 </div>
                 <div>
-                    <strong>Inactive Areas:</strong> {{ count(array_filter($areas, fn($a) => !$a['active'])) }}
+                    <strong>Inactive Areas:</strong> {{ $areas->where('active', false)->count() }}
                 </div>
                 <div>
-                    <strong>Map-Based Areas:</strong> {{ count(array_filter($areas, fn($a) => $a['type'] === 'map')) }}
+                    <strong>Map-Based Areas:</strong> {{ $areas->where('type', 'polygon')->count() }}
                 </div>
                 <div>
-                    <strong>Postcode Areas:</strong> {{ count(array_filter($areas, fn($a) => $a['type'] === 'postcode')) }}
+                    <strong>Postcode Areas:</strong> {{ $areas->where('type', 'postcode')->count() }}
                 </div>
                 <div>
-                    <strong>Total Postcodes:</strong> {{ collect($areas)->filter(fn($a) => $a['type'] === 'postcode')->sum(fn($a) => count(explode(',', $a['postcodes'] ?? ''))) }}
+                    <strong>Total Postcodes:</strong> {{ $areas->where('type', 'postcode')->sum(function($area) { return count(explode(',', $area->postcodes ?? '')); }) }}
                 </div>
             </div>
         </div>
