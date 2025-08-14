@@ -313,37 +313,42 @@
 
         <!-- Current Week Filter -->
         <div id="current-week-filter" class="filter-content active">
-            <div class="filter-description">Show collections for the current week (Monday to Sunday)</div>
-            <div class="filter-controls">
-                <button class="apply-filter-btn" onclick="applyFilter('current-week')">
-                    🔍 Show Current Week Collections
-                </button>
+            <div class="filter-description">
+                <strong>✅ Auto-Applied:</strong> Showing collections for the current week (Monday to Sunday)
+            </div>
+            <div style="margin-top: 10px; padding: 10px; background: #e8f5e8; border-radius: 8px; border-left: 4px solid #28a745;">
+                <small>🚀 <strong>Filter applied automatically!</strong> No additional clicks needed.</small>
             </div>
         </div>
 
         <!-- Next Week Filter -->
         <div id="next-week-filter" class="filter-content">
-            <div class="filter-description">Show collections for next week (Monday to Sunday)</div>
-            <div class="filter-controls">
-                <button class="apply-filter-btn" onclick="applyFilter('next-week')">
-                    🔍 Show Next Week Collections
-                </button>
+            <div class="filter-description">
+                <strong>✅ Auto-Applied:</strong> Showing collections for next week (Monday to Sunday)
+            </div>
+            <div style="margin-top: 10px; padding: 10px; background: #e8f5e8; border-radius: 8px; border-left: 4px solid #28a745;">
+                <small>🚀 <strong>Filter applied automatically!</strong> No additional clicks needed.</small>
             </div>
         </div>
 
         <!-- Two Weeks Filter -->
         <div id="two-weeks-filter" class="filter-content">
-            <div class="filter-description">Show collections for the next 2 weeks from today</div>
-            <div class="filter-controls">
-                <button class="apply-filter-btn" onclick="applyFilter('two-weeks')">
-                    🔍 Show Next 2 Weeks Collections
-                </button>
+            <div class="filter-description">
+                <strong>✅ Auto-Applied:</strong> Showing collections for the next 2 weeks from today
+            </div>
+            <div style="margin-top: 10px; padding: 10px; background: #e8f5e8; border-radius: 8px; border-left: 4px solid #28a745;">
+                <small>🚀 <strong>Filter applied automatically!</strong> No additional clicks needed.</small>
             </div>
         </div>
 
         <!-- Specific Day Filter -->
         <div id="specific-day-filter" class="filter-content">
-            <div class="filter-description">Choose a specific date to view collections for that day</div>
+            <div class="filter-description">
+                <strong>⚙️ Manual Setup Required:</strong> Choose a specific date to view collections for that day
+            </div>
+            <div style="margin-bottom: 15px; padding: 10px; background: #fff3cd; border-radius: 8px; border-left: 4px solid #ffc107;">
+                <small>📝 <strong>Select a date below, then click Apply Filter</strong></small>
+            </div>
             <div class="filter-controls">
                 <div class="filter-group">
                     <label for="specific-date">Select Date</label>
@@ -353,14 +358,19 @@
                     </div>
                 </div>
                 <button class="apply-filter-btn" onclick="applyFilter('specific-day')">
-                    🔍 Show Selected Day Collections
+                    🔍 Apply Date Filter
                 </button>
             </div>
         </div>
 
         <!-- Date Range Filter -->
         <div id="date-range-filter" class="filter-content">
-            <div class="filter-description">Select a custom date range to view collections between two dates</div>
+            <div class="filter-description">
+                <strong>⚙️ Manual Setup Required:</strong> Select a custom date range to view collections between two dates
+            </div>
+            <div style="margin-bottom: 15px; padding: 10px; background: #fff3cd; border-radius: 8px; border-left: 4px solid #ffc107;">
+                <small>📝 <strong>Select date range below, then click Apply Filter</strong></small>
+            </div>
             <div class="filter-controls">
                 <div class="filter-group">
                     <label for="from-date">From Date</label>
@@ -377,18 +387,18 @@
                     </div>
                 </div>
                 <button class="apply-filter-btn" onclick="applyFilter('date-range')">
-                    🔍 Show Date Range Collections
+                    🔍 Apply Date Range Filter
                 </button>
             </div>
         </div>
 
         <!-- All Data Filter -->
         <div id="all-data-filter" class="filter-content">
-            <div class="filter-description">Show all collections without any date filtering</div>
-            <div class="filter-controls">
-                <button class="apply-filter-btn" onclick="applyFilter('all-data')">
-                    🔍 Show All Collections
-                </button>
+            <div class="filter-description">
+                <strong>✅ Auto-Applied:</strong> Showing all collections without any date filtering
+            </div>
+            <div style="margin-top: 10px; padding: 10px; background: #e8f5e8; border-radius: 8px; border-left: 4px solid #28a745;">
+                <small>🚀 <strong>Filter applied automatically!</strong> No additional clicks needed.</small>
             </div>
         </div>
 
@@ -606,6 +616,13 @@
         // Show selected tab
         document.getElementById(tabName + '-filter').classList.add('active');
         event.target.classList.add('active');
+
+        // Auto-apply filter for simple tabs that don't need user input
+        const autoApplyFilters = ['current-week', 'next-week', 'two-weeks', 'all-data'];
+        if (autoApplyFilters.includes(tabName)) {
+            // Apply filter immediately
+            applyFilter(tabName);
+        }
     }
 
     // Get date range for different filter types
@@ -817,6 +834,9 @@
 
         // Initialize date inputs
         initializeDateInputs();
+
+        // Auto-apply default filter (current week) when page loads
+        applyFilter('current-week');
 
         // Make map globally accessible
         window.map = map;
