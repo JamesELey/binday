@@ -14,7 +14,7 @@ Add these secrets (one by one):
 |-------------|-------|-------------|
 | `APP_NAME` | `"BinDay Collection Management"` | Application name |
 | `APP_KEY` | `base64:DjhYykpLrjYkxLLWb7ZBHCqR9XIsQT8p41Z1Qq7iQcw=` | Laravel encryption key |
-| `APP_URL` | `https://thebinday.co.uk` | Your production domain |
+| `APP_URL` | `http://217.154.48.34/` | Your production domain |
 
 ### **Database Secrets** 
 | Secret Name | Value | Description |
@@ -68,7 +68,7 @@ Based on your working production setup, your secrets should be:
 ```
 APP_NAME = "BinDay Collection Management"
 APP_KEY = base64:DjhYykpLrjYkxLLWb7ZBHCqR9XIsQT8p41Z1Qq7iQcw=
-APP_URL = https://thebinday.co.uk
+APP_URL = http://217.154.48.34/
 
 DB_HOST = 127.0.0.1
 DB_PORT = 3306
@@ -97,7 +97,7 @@ MAIL_FROM_ADDRESS = noreply@thebinday.co.uk
 ### **Step 5: Verify it Worked**
 
 After deployment:
-- Visit your site: `https://thebinday.co.uk/login`
+- Visit your site: `http://217.154.48.34/login`
 - Login with: `admin@binday.com` / `password123`
 - Should work without any manual configuration!
 

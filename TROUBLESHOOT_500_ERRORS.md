@@ -133,7 +133,7 @@ Set these in GitHub → Settings → Secrets and variables → Actions:
 ```
 APP_NAME = BinDay Collection Management
 APP_KEY = base64:DjhYykpLrjYkxLLWb7ZBHCqR9XIsQT8p41Z1Qq7iQcw=
-APP_URL = https://thebinday.co.uk
+APP_URL = http://217.154.48.34/
 
 DB_HOST = 127.0.0.1
 DB_PORT = 3306
@@ -167,7 +167,7 @@ APP_NAME=BinDay Collection Management
 APP_ENV=production
 APP_KEY=base64:DjhYykpLrjYkxLLWb7ZBHCqR9XIsQT8p41Z1Qq7iQcw=
 APP_DEBUG=false
-APP_URL=https://thebinday.co.uk
+APP_URL=http://217.154.48.34/
 
 DB_CONNECTION=mysql
 DB_HOST=127.0.0.1
