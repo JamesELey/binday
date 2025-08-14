@@ -58,7 +58,7 @@ Route::get('/admin/login', [AuthController::class, 'loginForm'])->name('admin.lo
 Route::post('/admin/login', [AuthController::class, 'login'])->name('admin.login');
 Route::post('/admin/logout', [AuthController::class, 'logout'])->name('admin.logout');
 
-Route::middleware([\App\Http\Middleware\AdminOnly::class])->group(function () {
+Route::middleware(['admin'])->group(function () {
     Route::get('/admin/settings', [SettingsController::class, 'edit'])->name('admin.settings');
     Route::put('/admin/settings', [SettingsController::class, 'update'])->name('admin.settings.update');
     Route::post('/admin/seed-demo', [SettingsController::class, 'seedDemo'])->name('admin.seedDemo');
