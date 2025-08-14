@@ -170,26 +170,26 @@
             <tbody>
                 @foreach($collections as $collection)
                 <tr>
-                    <td>#{{ $collection['id'] }}</td>
-                    <td><strong>{{ $collection['customer_name'] }}</strong></td>
-                    <td>{{ Str::limit($collection['address'], 40) }}</td>
+                    <td>#{{ $collection->id }}</td>
+                    <td><strong>{{ $collection->customer_name }}</strong></td>
+                    <td>{{ Str::limit($collection->address, 40) }}</td>
                     <td>
-                        <span class="bin-type bin-{{ strtolower(str_replace(' ', '', $collection['bin_type'])) }}">
-                            {{ $collection['bin_type'] }}
+                        <span class="bin-type bin-{{ strtolower(str_replace(' ', '', $collection->bin_type)) }}">
+                            {{ $collection->bin_type }}
                         </span>
                     </td>
-                    <td>{{ date('M j, Y', strtotime($collection['collection_date'])) }}</td>
-                    <td>{{ $collection['collection_time'] }}</td>
+                    <td>{{ $collection->collection_date->format('M j, Y') }}</td>
+                    <td>{{ $collection->collection_time ? $collection->collection_time->format('H:i') : 'Not set' }}</td>
                     <td>
-                        <span class="status-badge status-{{ strtolower($collection['status']) }}">
-                            {{ $collection['status'] }}
+                        <span class="status-badge status-{{ strtolower($collection->status) }}">
+                            {{ $collection->status }}
                         </span>
                     </td>
-                    <td>{{ $collection['phone'] }}</td>
+                    <td>{{ $collection->phone }}</td>
                     <td>
                         <div class="action-buttons">
-                            <a href="{{ route('collections.edit', $collection['id']) }}" class="btn btn-edit">✏️ Edit</a>
-                            <form action="{{ route('collections.destroy', $collection['id']) }}" method="POST" style="display: inline;" onsubmit="return confirm('Are you sure you want to delete this collection?');">
+                            <a href="{{ route('collections.edit', $collection->id) }}" class="btn btn-edit">✏️ Edit</a>
+                            <form action="{{ route('collections.destroy', $collection->id) }}" method="POST" style="display: inline;" onsubmit="return confirm('Are you sure you want to delete this collection?');">
                                 @csrf
                                 @method('DELETE')
                                 <button type="submit" class="btn btn-delete">🗑️ Delete</button>
@@ -216,16 +216,16 @@
             <h3>📊 Quick Stats</h3>
             <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px;">
                 <div>
-                    <strong>Total Collections:</strong> {{ count($collections) }}
+                    <strong>Total Collections:</strong> {{ $collections->count() }}
                 </div>
                 <div>
-                    <strong>Scheduled:</strong> {{ count(array_filter($collections, fn($c) => $c['status'] === 'Scheduled')) }}
+                    <strong>Scheduled:</strong> {{ $collections->where('status', 'Scheduled')->count() }}
                 </div>
                 <div>
-                    <strong>Completed:</strong> {{ count(array_filter($collections, fn($c) => $c['status'] === 'Completed')) }}
+                    <strong>Completed:</strong> {{ $collections->where('status', 'Completed')->count() }}
                 </div>
                 <div>
-                    <strong>Pending:</strong> {{ count(array_filter($collections, fn($c) => $c['status'] === 'Pending')) }}
+                    <strong>Pending:</strong> {{ $collections->where('status', 'Pending')->count() }}
                 </div>
             </div>
         </div>

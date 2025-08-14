@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Manage Bin Types - {{ $area['name'] }}</title>
+    <title>Manage Bin Types - {{ $area->name }}</title>
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <style>
         body { font-family: Arial, sans-serif; margin: 0; padding: 20px; background-color: #f5f5f5; }
@@ -71,12 +71,12 @@
     <div class="container">
         <div class="header">
             <h1 class="title">Manage Bin Types</h1>
-            <p class="subtitle">Configure allowed bin types for {{ $area['name'] }}</p>
+            <p class="subtitle">Configure allowed bin types for {{ $area->name }}</p>
         </div>
 
         <div class="nav-links">
             <a href="{{ route('areas.index') }}">← Back to Areas</a>
-            <a href="{{ route('areas.edit', $area['id']) }}">Edit Area Details</a>
+            <a href="{{ route('areas.edit', $area->id) }}">Edit Area Details</a>
             <a href="#" class="active">Manage Bin Types</a>
         </div>
 
@@ -93,22 +93,22 @@
             <div class="area-details">
                 <div class="detail-item">
                     <span class="detail-label">Name:</span>
-                    <span class="detail-value">{{ $area['name'] }}</span>
+                    <span class="detail-value">{{ $area->name }}</span>
                 </div>
                 <div class="detail-item">
                     <span class="detail-label">Type:</span>
-                    <span class="detail-value">{{ ucfirst($area['type']) }}</span>
+                    <span class="detail-value">{{ ucfirst($area->type) }}</span>
                 </div>
                 <div class="detail-item">
                     <span class="detail-label">Status:</span>
-                    <span class="detail-value">{{ $area['active'] ? 'Active' : 'Inactive' }}</span>
+                    <span class="detail-value">{{ $area->active ? 'Active' : 'Inactive' }}</span>
                 </div>
                 <div class="detail-item">
                     <span class="detail-label">Current Bin Types:</span>
                     <div class="detail-value">
-                        @if(!empty($area['bin_types']))
+                        @if(!empty($area->bin_types))
                             <ul class="bin-type-list">
-                                @foreach($area['bin_types'] as $type)
+                                @foreach($area->bin_types as $type)
                                     <li>{{ $type }}</li>
                                 @endforeach
                             </ul>
@@ -120,7 +120,7 @@
             </div>
         </div>
 
-        <form action="{{ route('areas.updateBinTypes', $area['id']) }}" method="POST" id="binTypesForm">
+        <form action="{{ route('areas.updateBinTypes', $area->id) }}" method="POST" id="binTypesForm">
             @csrf
             @method('PUT')
 
@@ -130,14 +130,14 @@
                 
                 <div class="bin-types-grid">
                     @foreach($allBinTypes as $binType => $color)
-                        <div class="bin-type-card {{ in_array($binType, $area['bin_types'] ?? []) ? 'active' : '' }}">
+                        <div class="bin-type-card {{ in_array($binType, $area->bin_types ?? []) ? 'active' : '' }}">
                             <div class="bin-type-header">
                                 <label class="bin-type-name">
                                     <input type="checkbox" 
                                            name="active_bin_types[]" 
                                            value="{{ $binType }}" 
                                            class="bin-type-checkbox"
-                                           {{ in_array($binType, $area['bin_types'] ?? []) ? 'checked' : '' }}
+                                           {{ in_array($binType, $area->bin_types ?? []) ? 'checked' : '' }}
                                            onchange="toggleBinTypeCard(this)">
                                     {{ $binType }}
                                 </label>
@@ -221,7 +221,7 @@
 
         // Quick add bin type functionality (for future enhancement)
         function quickAddBinType(binType) {
-            fetch(`{{ route('areas.addBinType', $area['id']) }}`, {
+            fetch(`{{ route('areas.addBinType', $area->id) }}`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',

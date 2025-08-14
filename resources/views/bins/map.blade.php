@@ -408,14 +408,6 @@
         </div>
     </div>
 
-    <div class="map-info">
-        <strong>🎛️ Layer Controls:</strong> Use the controls in the top-right corner of the map to:
-        <ul style="margin: 10px 0 0 20px;">
-            <li><strong>Toggle bin types:</strong> Show/hide different waste collection types</li>
-            <li><strong>Toggle areas:</strong> Show/hide allowed service areas and boundaries</li>
-            <li><strong>Cluster view:</strong> Markers automatically cluster when zoomed out for better visibility</li>
-        </ul>
-    </div>
 
     <div id="map"></div>
 </main>

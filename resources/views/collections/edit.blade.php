@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Edit Collection #{{ $collection['id'] }} - Bin Collection Schedules</title>
+    <title>Edit Collection #{{ $collection->id }} - Bin Collection Schedules</title>
     <style>
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
@@ -104,7 +104,7 @@
 </head>
 <body>
     <div class="header">
-        <h1>✏️ Edit Collection #{{ $collection['id'] }}</h1>
+        <h1>✏️ Edit Collection #{{ $collection->id }}</h1>
         <p>Modify the details of this waste collection booking.</p>
         
         <div class="nav-links">
@@ -118,10 +118,10 @@
     <div class="content">
         <div class="current-value">
             <h3>📋 Current Collection Details</h3>
-            <p><strong>Customer:</strong> {{ $collection['customer_name'] }} | <strong>Phone:</strong> {{ $collection['phone'] }}</p>
-            <p><strong>Address:</strong> {{ $collection['address'] }}</p>
-            <p><strong>Type:</strong> {{ $collection['bin_type'] }} | <strong>Date:</strong> {{ date('M j, Y', strtotime($collection['collection_date'])) }} at {{ $collection['collection_time'] }}</p>
-            <p><strong>Status:</strong> {{ $collection['status'] }} | <strong>Notes:</strong> {{ $collection['notes'] ?: 'No notes' }}</p>
+            <p><strong>Customer:</strong> {{ $collection->customer_name }} | <strong>Phone:</strong> {{ $collection->phone }}</p>
+            <p><strong>Address:</strong> {{ $collection->address }}</p>
+            <p><strong>Type:</strong> {{ $collection->bin_type }} | <strong>Date:</strong> {{ $collection->collection_date->format('M j, Y') }} at {{ $collection->collection_time ? $collection->collection_time->format('H:i') : 'Not set' }}</p>
+            <p><strong>Status:</strong> {{ $collection->status }} | <strong>Notes:</strong> {{ $collection->notes ?: 'No notes' }}</p>
         </div>
 
         <h2>Update Collection Information</h2>
@@ -133,39 +133,39 @@
             </div>
         @endif
 
-        <form action="{{ route('collections.update', $collection['id']) }}" method="POST">
+        <form action="{{ route('collections.update', $collection->id) }}" method="POST">
             @csrf
             @method('PUT')
             
             <div class="form-row">
                 <div class="form-group">
                     <label for="customer_name">Customer Name <span class="required">*</span></label>
-                    <input type="text" id="customer_name" name="customer_name" value="{{ $collection['customer_name'] }}" required>
+                    <input type="text" id="customer_name" name="customer_name" value="{{ $collection->customer_name }}" required>
                 </div>
                 <div class="form-group">
                     <label for="phone">Phone Number <span class="required">*</span></label>
-                    <input type="tel" id="phone" name="phone" value="{{ $collection['phone'] }}" required>
+                    <input type="tel" id="phone" name="phone" value="{{ $collection->phone }}" required>
                 </div>
             </div>
 
             <div class="form-group">
                 <label for="address">Collection Address <span class="required">*</span></label>
-                <textarea id="address" name="address" required>{{ $collection['address'] }}</textarea>
+                <textarea id="address" name="address" required>{{ $collection->address }}</textarea>
             </div>
 
             <div class="form-row">
                 <div class="form-group">
                     <label for="bin_type">Bin Type <span class="required">*</span></label>
                     <select id="bin_type" name="bin_type" required>
-                        <option value="Residual Waste" {{ $collection['bin_type'] === 'Residual Waste' ? 'selected' : '' }}>🗑️ Residual Waste (General waste)</option>
-                        <option value="Recycling" {{ $collection['bin_type'] === 'Recycling' ? 'selected' : '' }}>♻️ Recycling (Paper, plastic, cans)</option>
-                        <option value="Garden Waste" {{ $collection['bin_type'] === 'Garden Waste' ? 'selected' : '' }}>🌿 Garden Waste (Grass, leaves, branches)</option>
-                        <option value="Food Waste" {{ $collection['bin_type'] === 'Food Waste' ? 'selected' : '' }}>🥬 Food Waste (Kitchen scraps)</option>
+                        <option value="Residual Waste" {{ $collection->bin_type === 'Residual Waste' ? 'selected' : '' }}>🗑️ Residual Waste (General waste)</option>
+                        <option value="Recycling" {{ $collection->bin_type === 'Recycling' ? 'selected' : '' }}>♻️ Recycling (Paper, plastic, cans)</option>
+                        <option value="Garden Waste" {{ $collection->bin_type === 'Garden Waste' ? 'selected' : '' }}>🌿 Garden Waste (Grass, leaves, branches)</option>
+                        <option value="Food Waste" {{ $collection->bin_type === 'Food Waste' ? 'selected' : '' }}>🥬 Food Waste (Kitchen scraps)</option>
                     </select>
                 </div>
                 <div class="form-group">
                     <label for="collection_date">Collection Date <span class="required">*</span></label>
-                    <input type="date" id="collection_date" name="collection_date" value="{{ $collection['collection_date'] }}" required>
+                    <input type="date" id="collection_date" name="collection_date" value="{{ $collection->collection_date->format('Y-m-d') }}" required>
                 </div>
             </div>
 
@@ -173,30 +173,30 @@
                 <div class="form-group">
                     <label for="collection_time">Collection Time</label>
                     <select id="collection_time" name="collection_time">
-                        <option value="08:00" {{ $collection['collection_time'] === '08:00' ? 'selected' : '' }}>08:00 - Early Morning</option>
-                        <option value="09:00" {{ $collection['collection_time'] === '09:00' ? 'selected' : '' }}>09:00 - Morning</option>
-                        <option value="10:00" {{ $collection['collection_time'] === '10:00' ? 'selected' : '' }}>10:00 - Mid Morning</option>
-                        <option value="11:00" {{ $collection['collection_time'] === '11:00' ? 'selected' : '' }}>11:00 - Late Morning</option>
-                        <option value="12:00" {{ $collection['collection_time'] === '12:00' ? 'selected' : '' }}>12:00 - Noon</option>
-                        <option value="13:00" {{ $collection['collection_time'] === '13:00' ? 'selected' : '' }}>13:00 - Early Afternoon</option>
-                        <option value="14:00" {{ $collection['collection_time'] === '14:00' ? 'selected' : '' }}>14:00 - Afternoon</option>
-                        <option value="15:00" {{ $collection['collection_time'] === '15:00' ? 'selected' : '' }}>15:00 - Mid Afternoon</option>
-                        <option value="16:00" {{ $collection['collection_time'] === '16:00' ? 'selected' : '' }}>16:00 - Late Afternoon</option>
+                        <option value="08:00" {{ ($collection->collection_time ? $collection->collection_time->format('H:i') : '') === '08:00' ? 'selected' : '' }}>08:00 - Early Morning</option>
+                        <option value="09:00" {{ ($collection->collection_time ? $collection->collection_time->format('H:i') : '') === '09:00' ? 'selected' : '' }}>09:00 - Morning</option>
+                        <option value="10:00" {{ ($collection->collection_time ? $collection->collection_time->format('H:i') : '') === '10:00' ? 'selected' : '' }}>10:00 - Mid Morning</option>
+                        <option value="11:00" {{ ($collection->collection_time ? $collection->collection_time->format('H:i') : '') === '11:00' ? 'selected' : '' }}>11:00 - Late Morning</option>
+                        <option value="12:00" {{ ($collection->collection_time ? $collection->collection_time->format('H:i') : '') === '12:00' ? 'selected' : '' }}>12:00 - Noon</option>
+                        <option value="13:00" {{ ($collection->collection_time ? $collection->collection_time->format('H:i') : '') === '13:00' ? 'selected' : '' }}>13:00 - Early Afternoon</option>
+                        <option value="14:00" {{ ($collection->collection_time ? $collection->collection_time->format('H:i') : '') === '14:00' ? 'selected' : '' }}>14:00 - Afternoon</option>
+                        <option value="15:00" {{ ($collection->collection_time ? $collection->collection_time->format('H:i') : '') === '15:00' ? 'selected' : '' }}>15:00 - Mid Afternoon</option>
+                        <option value="16:00" {{ ($collection->collection_time ? $collection->collection_time->format('H:i') : '') === '16:00' ? 'selected' : '' }}>16:00 - Late Afternoon</option>
                     </select>
                 </div>
                 <div class="form-group">
                     <label for="status">Status</label>
                     <select id="status" name="status">
-                        <option value="Pending" {{ $collection['status'] === 'Pending' ? 'selected' : '' }}>Pending</option>
-                        <option value="Scheduled" {{ $collection['status'] === 'Scheduled' ? 'selected' : '' }}>Scheduled</option>
-                        <option value="Completed" {{ $collection['status'] === 'Completed' ? 'selected' : '' }}>Completed</option>
+                        <option value="Pending" {{ $collection->status === 'Pending' ? 'selected' : '' }}>Pending</option>
+                        <option value="Scheduled" {{ $collection->status === 'Scheduled' ? 'selected' : '' }}>Scheduled</option>
+                        <option value="Completed" {{ $collection->status === 'Completed' ? 'selected' : '' }}>Completed</option>
                     </select>
                 </div>
             </div>
 
             <div class="form-group">
                 <label for="notes">Special Instructions</label>
-                <textarea id="notes" name="notes" placeholder="Any special instructions for the collection team">{{ $collection['notes'] }}</textarea>
+                <textarea id="notes" name="notes" placeholder="Any special instructions for the collection team">{{ $collection->notes }}</textarea>
             </div>
 
             <button type="submit" class="submit-btn">💾 Update Collection</button>
