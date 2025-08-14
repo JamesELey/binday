@@ -507,7 +507,7 @@
         const areasGroup = L.layerGroup();
         
         areas.forEach(area => {
-            if (area.type === 'map' && area.coordinates && area.coordinates.length > 0) {
+            if (area.type === 'polygon' && area.coordinates && area.coordinates.length > 0) {
                 // Create polygon for map-based areas
                 const polygon = L.polygon(area.coordinates, {
                     color: area.active ? '#28a745' : '#6c757d',
@@ -520,7 +520,7 @@
                     <strong>${area.name}</strong><br/>
                     ${area.description || ''}<br/>
                     <small>Status: ${area.active ? 'Active' : 'Inactive'}</small><br/>
-                    <small>Type: Map Area</small>
+                    <small>Type: Polygon Area</small>
                 `);
             } else if (area.type === 'postcode' && area.postcodes) {
                 // Create markers for postcode-based areas (positioned around London)
