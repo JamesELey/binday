@@ -225,6 +225,18 @@ jobs:
           # Run migrations (if needed)
           php artisan migrate --force
           
+          # Seed database with demo users (if needed)
+          echo "🌱 Checking if demo users exist..."
+          USER_COUNT=$(php artisan tinker --execute="echo App\\User::count();")
+          if [ "$USER_COUNT" -eq "0" ]; then
+            echo "🌱 No users found, seeding database with demo data..."
+            php artisan db:seed --class=UserSeeder
+            php artisan db:seed --class=AreaSeeder
+            echo "✅ Demo users and areas seeded"
+          else
+            echo "ℹ️ Users already exist ($USER_COUNT users), skipping seed"
+          fi
+          
           # Set final permissions
           chmod -R 775 storage bootstrap/cache
           
