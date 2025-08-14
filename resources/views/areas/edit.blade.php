@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="csrf-token" content="{{ csrf_token() }}">
-    <title>Edit Area #{{ $area['id'] }} - Bin Collection Admin</title>
+    <title>Edit Area #{{ $area->id }} - Bin Collection Admin</title>
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <link rel="stylesheet" href="https://unpkg.com/leaflet-draw@1.0.4/dist/leaflet.draw.css" />
     <style>
@@ -196,7 +196,7 @@
 </head>
 <body>
     <div class="header">
-        <h1>✏️ Edit Area #{{ $area['id'] }}</h1>
+        <h1>✏️ Edit Area #{{ $area->id }}</h1>
         <p>Modify the area coverage using the map editor or postcode settings.</p>
         
         <div class="nav-links">
@@ -212,28 +212,28 @@
             <h3>📋 Current Area Details</h3>
             <div class="form-row">
                 <div>
-                    <p><strong>Name:</strong> {{ $area['name'] }}</p>
-                    <p><strong>Status:</strong> {{ $area['active'] ? '✅ Active' : '❌ Inactive' }}</p>
+                    <p><strong>Name:</strong> {{ $area->name }}</p>
+                    <p><strong>Status:</strong> {{ $area->active ? '✅ Active' : '❌ Inactive' }}</p>
                 </div>
                 <div>
                     <p><strong>Type:</strong> 
-                        @if($area['type'] === 'map')
-                            🗺️ Map Polygon ({{ count($area['coordinates'] ?? []) }} points)
+                        @if($area->type === 'polygon')
+                            🗺️ Map Polygon ({{ count($area->coordinates ?? []) }} points)
                         @else
                             📮 Postcode Areas
                         @endif
                     </p>
                     <p><strong>Coverage:</strong> 
-                        @if($area['type'] === 'map')
+                        @if($area->type === 'polygon')
                             Geographic boundaries
                         @else
-                            {{ $area['postcodes'] ?? 'No postcodes' }}
+                            {{ $area->postcodes ?? 'No postcodes' }}
                         @endif
                     </p>
                 </div>
             </div>
-            @if($area['description'])
-                <p><strong>Description:</strong> {{ $area['description'] }}</p>
+            @if($area->description)
+                <p><strong>Description:</strong> {{ $area->description }}</p>
             @endif
         </div>
 
@@ -256,7 +256,7 @@
         <!-- Editor Tabs -->
         <div class="editor-tabs">
             <button class="tab-button active" onclick="switchTab('basic')">📝 Basic Info</button>
-            @if($area['type'] === 'map')
+            @if($area->type === 'polygon')
                 <button class="tab-button" onclick="switchTab('map')">🗺️ Edit Polygon</button>
             @endif
             <button class="tab-button" onclick="switchTab('postcodes')">📮 Postcodes</button>
@@ -265,27 +265,27 @@
         <!-- Basic Information Tab -->
         <div id="basic-tab" class="tab-content active">
             <h2>Update Basic Information</h2>
-            <form action="{{ route('areas.update', $area['id']) }}" method="POST">
+            <form action="{{ route('areas.update', $area->id) }}" method="POST">
                 @csrf
                 @method('PUT')
                 
                 <div class="form-row">
                     <div class="form-group">
                         <label for="name">Area Name <span class="required">*</span></label>
-                        <input type="text" id="name" name="name" value="{{ old('name', $area['name']) }}" required>
+                        <input type="text" id="name" name="name" value="{{ old('name', $area->name) }}" required>
                     </div>
                     <div class="form-group">
                         <label for="active">Status <span class="required">*</span></label>
                         <select id="active" name="active" required>
-                            <option value="1" {{ old('active', $area['active']) == '1' ? 'selected' : '' }}>Active</option>
-                            <option value="0" {{ old('active', $area['active']) == '0' ? 'selected' : '' }}>Inactive</option>
+                            <option value="1" {{ old('active', $area->active) == '1' ? 'selected' : '' }}>Active</option>
+                            <option value="0" {{ old('active', $area->active) == '0' ? 'selected' : '' }}>Inactive</option>
                         </select>
                     </div>
                 </div>
 
                 <div class="form-group">
                     <label for="description">Description</label>
-                    <textarea id="description" name="description" placeholder="Brief description of this area coverage">{{ old('description', $area['description']) }}</textarea>
+                    <textarea id="description" name="description" placeholder="Brief description of this area coverage">{{ old('description', $area->description) }}</textarea>
                 </div>
 
                 <button type="submit" class="submit-btn">💾 Update Basic Info</button>
@@ -293,12 +293,12 @@
         </div>
 
         <!-- Map Editor Tab -->
-        @if($area['type'] === 'map')
+        @if($area->type === 'polygon')
         <div id="map-tab" class="tab-content">
             <h2>🗺️ Edit Area Polygon</h2>
             <div class="map-info">
                 <strong>📍 Interactive Map Editor</strong><br>
-                Current polygon has {{ count($area['coordinates'] ?? []) }} coordinate points. 
+                Current polygon has {{ count($area->coordinates ?? []) }} coordinate points. 
                 Draw a new polygon to replace the current boundaries.
             </div>
             
@@ -306,7 +306,7 @@
             
             <div class="coordinates-display">
                 <strong>📊 Polygon Coordinates:</strong>
-                <div id="coordinates">{{ $area['coordinates'] ? json_encode($area['coordinates']) : 'No coordinates defined' }}</div>
+                <div id="coordinates">{{ $area->coordinates ? json_encode($area->coordinates) : 'No coordinates defined' }}</div>
             </div>
 
             <div class="action-buttons">
@@ -321,20 +321,20 @@
         <!-- Postcodes Tab -->
         <div id="postcodes-tab" class="tab-content">
             <h2>📮 Postcode Management</h2>
-            @if($area['type'] === 'map')
+            @if($area->type === 'polygon')
                 <div style="background: #fff3cd; padding: 15px; border-radius: 5px; margin-bottom: 20px; border-left: 4px solid #ffc107;">
                     <strong>⚠️ Note:</strong> This area is currently map-based. Converting to postcode-based will replace the drawn polygon with postcode areas.
                 </div>
             @endif
             
-            <form action="{{ route('areas.update', $area['id']) }}" method="POST">
+            <form action="{{ route('areas.update', $area->id) }}" method="POST">
                 @csrf
                 @method('PUT')
                 
                 <div class="form-group">
                     <label for="postcodes">Postcodes (comma-separated)</label>
                     <input type="text" id="postcodes" name="postcodes" 
-                           value="{{ old('postcodes', $area['postcodes'] ?? '') }}" 
+                           value="{{ old('postcodes', $area->postcodes ?? '') }}" 
                            placeholder="e.g., EC1, EC2, EC3, WC1, WC2">
                     <small style="color: #6c757d;">Enter postcode areas separated by commas (e.g., EC1, EC2, N1, N2)</small>
                 </div>
@@ -343,7 +343,7 @@
                 <button type="submit" class="submit-btn">💾 Update Postcodes</button>
             </form>
             
-            @if($area['type'] === 'map' && isset($area['postcodes']) && $area['postcodes'])
+            @if($area->type === 'polygon' && isset($area->postcodes) && $area->postcodes)
                 <div style="margin-top: 20px;">
                     <button class="btn btn-warning" onclick="convertToPostcodeArea()">
                         🔄 Convert to Postcode-Based Area
@@ -448,7 +448,7 @@
         }
 
         function loadCurrentPolygon() {
-            const coordinates = @json($area['coordinates'] ?? []);
+            const coordinates = @json($area->coordinates ?? []);
             
             if (coordinates && coordinates.length > 0) {
                 drawnItems.clearLayers();
@@ -494,7 +494,7 @@
             const coordinates = currentPolygon.getLatLngs()[0].map(latlng => [latlng.lat, latlng.lng]);
             
             try {
-                const response = await fetch(`/areas/{{ $area['id'] }}`, {
+                const response = await fetch(`/areas/{{ $area->id }}`, {
                     method: 'PUT',
                     headers: {
                         'Content-Type': 'application/json',
@@ -534,7 +534,7 @@
                     return;
                 }
 
-                const response = await fetch(`/areas/{{ $area['id'] }}`, {
+                const response = await fetch(`/areas/{{ $area->id }}`, {
                     method: 'PUT',
                     headers: {
                         'Content-Type': 'application/json',
