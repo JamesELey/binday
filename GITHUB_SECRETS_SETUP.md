@@ -14,7 +14,7 @@ Add these secrets (one by one):
 |-------------|-------|-------------|
 | `APP_NAME` | `"BinDay Collection Management"` | Application name |
 | `APP_KEY` | `base64:DjhYykpLrjYkxLLWb7ZBHCqR9XIsQT8p41Z1Qq7iQcw=` | Laravel encryption key |
-| `APP_URL` | `http://217.154.48.34/` | Your production domain |
+| `APP_URL` | `http://217.154.48.34` | Your production domain (with http://) |
 
 ### **Database Secrets** 
 | Secret Name | Value | Description |
@@ -68,7 +68,7 @@ Based on your working production setup, your secrets should be:
 ```
 APP_NAME = "BinDay Collection Management"
 APP_KEY = base64:DjhYykpLrjYkxLLWb7ZBHCqR9XIsQT8p41Z1Qq7iQcw=
-APP_URL = http://217.154.48.34/
+APP_URL = http://217.154.48.34
 
 DB_HOST = 127.0.0.1
 DB_PORT = 3306
