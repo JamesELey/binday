@@ -16,63 +16,105 @@ class AreaSeeder extends Seeder
             [
                 'name' => 'Eccleshall Town Centre',
                 'description' => 'Central Eccleshall area including High Street and surrounding residential streets',
-                'postcodes' => 'ST21 6BZ, ST21 6DF, ST21 6DT, ST21 6BW',
+                'postcodes' => null,
                 'active' => true,
-                'type' => 'postcode',
+                'type' => 'polygon',
+                'coordinates' => [
+                    [-2.2560, 52.8570], // Southwest corner
+                    [-2.2480, 52.8570], // Southeast corner  
+                    [-2.2480, 52.8610], // Northeast corner
+                    [-2.2560, 52.8610], // Northwest corner
+                    [-2.2560, 52.8570], // Close polygon
+                ],
                 'bin_types' => ['Food', 'Recycling', 'Garden'],
             ],
             [
                 'name' => 'Eccleshall Residential North',
                 'description' => 'Northern residential areas of Eccleshall including newer developments',
-                'postcodes' => 'ST21 6ET, ST21 6EU, ST21 6EW, ST21 6EX',
+                'postcodes' => null,
                 'active' => true,
-                'type' => 'postcode',
+                'type' => 'polygon',
+                'coordinates' => [
+                    [-2.2600, 52.8610], // Southwest corner
+                    [-2.2480, 52.8610], // Southeast corner
+                    [-2.2480, 52.8660], // Northeast corner
+                    [-2.2600, 52.8660], // Northwest corner
+                    [-2.2600, 52.8610], // Close polygon
+                ],
                 'bin_types' => ['Food', 'Recycling', 'Garden'],
             ],
             [
                 'name' => 'Eccleshall Rural South',
                 'description' => 'Southern rural areas and farms around Eccleshall',
-                'postcodes' => 'ST21 6AA, ST21 6AB, ST21 6AC, ST21 6AD',
+                'postcodes' => null,
                 'active' => true,
-                'type' => 'postcode',
+                'type' => 'polygon',
+                'coordinates' => [
+                    [-2.2580, 52.8520], // Southwest corner
+                    [-2.2450, 52.8520], // Southeast corner
+                    [-2.2450, 52.8570], // Northeast corner
+                    [-2.2580, 52.8570], // Northwest corner
+                    [-2.2580, 52.8520], // Close polygon
+                ],
                 'bin_types' => ['Food', 'Garden'], // No recycling for rural areas
             ],
             [
                 'name' => 'Stone Road Area',
                 'description' => 'Stone Road and connecting residential streets',
-                'postcodes' => 'ST21 6AE, ST21 6AF, ST21 6AG, ST21 6AH',
+                'postcodes' => null,
                 'active' => true,
-                'type' => 'postcode',
+                'type' => 'polygon',
+                'coordinates' => [
+                    [-2.2450, 52.8570], // Southwest corner
+                    [-2.2350, 52.8570], // Southeast corner
+                    [-2.2350, 52.8620], // Northeast corner
+                    [-2.2450, 52.8620], // Northwest corner
+                    [-2.2450, 52.8570], // Close polygon
+                ],
                 'bin_types' => ['Food', 'Recycling'],
             ],
             [
                 'name' => 'Castle Development',
                 'description' => 'New housing development near Eccleshall Castle',
-                'postcodes' => 'ST21 6ZA, ST21 6ZB, ST21 6ZC',
-                'active' => true,
-                'type' => 'postcode',
-                'bin_types' => ['Food', 'Recycling', 'Garden'],
-            ],
-            [
-                'name' => 'Stafford Central',
-                'description' => 'Central Stafford area - extended coverage for testing',
-                'postcodes' => 'ST16 2AA, ST16 2AB, ST16 2AC, ST16 2AD',
-                'active' => true,
-                'type' => 'postcode',
-                'bin_types' => ['Food', 'Recycling', 'Garden'],
-            ],
-            [
-                'name' => 'Test Polygon Area',
-                'description' => 'Test area using polygon coordinates',
                 'postcodes' => null,
-                'active' => false, // Disabled for now
+                'active' => true,
                 'type' => 'polygon',
                 'coordinates' => [
-                    [52.8586, -2.2524], // Eccleshall center
-                    [52.8600, -2.2500],
-                    [52.8600, -2.2550],
-                    [52.8570, -2.2550],
-                    [52.8586, -2.2524], // Close polygon
+                    [-2.2630, 52.8580], // Southwest corner
+                    [-2.2560, 52.8580], // Southeast corner
+                    [-2.2560, 52.8620], // Northeast corner
+                    [-2.2630, 52.8620], // Northwest corner
+                    [-2.2630, 52.8580], // Close polygon
+                ],
+                'bin_types' => ['Food', 'Recycling', 'Garden'],
+            ],
+            [
+                'name' => 'Stafford Extended Area',
+                'description' => 'Extended coverage area towards Stafford for demonstration',
+                'postcodes' => null,
+                'active' => true,
+                'type' => 'polygon',
+                'coordinates' => [
+                    [-2.1800, 52.8100], // Southwest corner (towards Stafford)
+                    [-2.1600, 52.8100], // Southeast corner
+                    [-2.1600, 52.8200], // Northeast corner
+                    [-2.1800, 52.8200], // Northwest corner
+                    [-2.1800, 52.8100], // Close polygon
+                ],
+                'bin_types' => ['Food', 'Recycling', 'Garden'],
+            ],
+            [
+                'name' => 'Eccleshall West Village',
+                'description' => 'Western village area with mixed residential and small commercial properties',
+                'postcodes' => null,
+                'active' => true,
+                'type' => 'polygon',
+                'coordinates' => [
+                    [-2.2680, 52.8540], // Southwest corner
+                    [-2.2580, 52.8540], // Southeast corner
+                    [-2.2580, 52.8590], // Northeast corner
+                    [-2.2680, 52.8590], // Northwest corner
+                    [-2.2680, 52.8540], // Close polygon
                 ],
                 'bin_types' => ['Food', 'Recycling'],
             ],
@@ -86,6 +128,6 @@ class AreaSeeder extends Seeder
         }
 
         $this->command->info('Created ' . count($areas) . ' demo areas');
-        $this->command->info('Areas cover various postcode zones around Eccleshall and Stafford');
+        $this->command->info('Areas use polygon coordinates around Eccleshall and Stafford for proper map display');
     }
 }
