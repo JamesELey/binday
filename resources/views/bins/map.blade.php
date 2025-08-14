@@ -835,15 +835,18 @@
         // Initialize date inputs
         initializeDateInputs();
 
-        // Auto-apply default filter (current week) when page loads
-        applyFilter('current-week');
-
         // Make map globally accessible
         window.map = map;
         window.binTypeLayers = binTypeLayers;
         window.areasLayer = areasLayer;
         window.areasData = areasData;
         window.layerControl = layerControl;
+
+        // Auto-apply default filter (current week) AFTER data is loaded and map is set up
+        // Wait a moment for the DOM to be ready, then apply the filter
+        setTimeout(() => {
+            applyFilter('current-week');
+        }, 100);
     }
 
     init();
