@@ -23,7 +23,7 @@ Add these secrets (one by one):
 | `DB_PORT` | `3306` | Database port (3306 for MySQL/MariaDB) |
 | `DB_DATABASE` | `binday` | Your database name |
 | `DB_USERNAME` | `binday_user` | Your database username |
-| `DB_PASSWORD` | `your_secure_password` | Your database password |
+| `DB_PASSWORD` | `binday123` | Your database password |
 
 ### **Email Secrets (Optional)**
 | Secret Name | Value | Description |
@@ -74,7 +74,7 @@ DB_HOST = 127.0.0.1
 DB_PORT = 3306
 DB_DATABASE = binday
 DB_USERNAME = binday_user
-DB_PASSWORD = [your database password from earlier]
+DB_PASSWORD = binday123
 
 MAIL_HOST = smtp.fasthosts.co.uk
 MAIL_PORT = 587

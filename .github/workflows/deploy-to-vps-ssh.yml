@@ -20,6 +20,74 @@ jobs:
     - name: 📥 Checkout code
       uses: actions/checkout@v4
       
+    - name: ✅ Validate Required Secrets
+      run: |
+        echo "🔍 Checking required GitHub Secrets..."
+        
+        # Check if essential secrets are configured
+        MISSING_SECRETS=()
+        
+        if [ -z "${{ secrets.VPS_HOST }}" ]; then
+          MISSING_SECRETS+=("VPS_HOST")
+        fi
+        
+        if [ -z "${{ secrets.VPS_USER }}" ]; then
+          MISSING_SECRETS+=("VPS_USER")
+        fi
+        
+        if [ -z "${{ secrets.SSH_PRIVATE_KEY }}" ]; then
+          MISSING_SECRETS+=("SSH_PRIVATE_KEY")
+        fi
+        
+        if [ -z "${{ secrets.DEPLOY_PATH }}" ]; then
+          MISSING_SECRETS+=("DEPLOY_PATH")
+        fi
+        
+        if [ -z "${{ secrets.APP_NAME }}" ]; then
+          MISSING_SECRETS+=("APP_NAME")
+        fi
+        
+        if [ -z "${{ secrets.APP_KEY }}" ]; then
+          MISSING_SECRETS+=("APP_KEY")
+        fi
+        
+        if [ -z "${{ secrets.APP_URL }}" ]; then
+          MISSING_SECRETS+=("APP_URL")
+        fi
+        
+        if [ -z "${{ secrets.DB_HOST }}" ]; then
+          MISSING_SECRETS+=("DB_HOST")
+        fi
+        
+        if [ -z "${{ secrets.DB_DATABASE }}" ]; then
+          MISSING_SECRETS+=("DB_DATABASE")
+        fi
+        
+        if [ -z "${{ secrets.DB_USERNAME }}" ]; then
+          MISSING_SECRETS+=("DB_USERNAME")
+        fi
+        
+        if [ -z "${{ secrets.DB_PASSWORD }}" ]; then
+          MISSING_SECRETS+=("DB_PASSWORD")
+        fi
+        
+        # Report results
+        if [ ${#MISSING_SECRETS[@]} -eq 0 ]; then
+          echo "✅ All required secrets are configured!"
+        else
+          echo "❌ Missing required GitHub Secrets:"
+          for secret in "${MISSING_SECRETS[@]}"; do
+            echo "   - $secret"
+          done
+          echo ""
+          echo "📋 Please add these secrets in:"
+          echo "   Repository Settings → Secrets and variables → Actions"
+          echo ""
+          echo "📖 For values and setup instructions, see:"
+          echo "   https://github.com/${{ github.repository }}/blob/main/GITHUB_SECRETS_SETUP.md"
+          exit 1
+        fi
+      
     - name: 🐘 Setup PHP
       uses: shivammathur/setup-php@v2
       with:
@@ -222,6 +290,29 @@ jobs:
           echo "PUSHER_APP_CLUSTER=mt1" >> "$DEPLOY_PATH/.env"
           
           echo "✅ Production .env file created from GitHub Secrets"
+          
+          # Validate .env file was created correctly
+          echo "🔍 Validating .env file..."
+          if [ -f "$DEPLOY_PATH/.env" ]; then
+            ENV_SIZE=$(stat -c%s "$DEPLOY_PATH/.env")
+            if [ $ENV_SIZE -gt 100 ]; then
+              echo "✅ .env file created successfully ($ENV_SIZE bytes)"
+              
+              # Check for empty critical values
+              if grep -q 'APP_NAME=""' "$DEPLOY_PATH/.env" || grep -q 'DB_PASSWORD=""' "$DEPLOY_PATH/.env"; then
+                echo "⚠️ Warning: Some .env values appear to be empty"
+                echo "   This usually means GitHub Secrets are not configured properly"
+              else
+                echo "✅ .env file appears to have valid values"
+              fi
+            else
+              echo "❌ .env file is too small ($ENV_SIZE bytes) - likely missing content"
+              exit 1
+            fi
+          else
+            echo "❌ .env file was not created!"
+            exit 1
+          fi
           
           echo "✅ Files deployed successfully"
           
