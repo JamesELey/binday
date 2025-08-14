@@ -508,20 +508,29 @@
         
         areas.forEach(area => {
             if (area.type === 'polygon' && area.coordinates && area.coordinates.length > 0) {
-                // Create polygon for map-based areas
-                const polygon = L.polygon(area.coordinates, {
-                    color: area.active ? '#28a745' : '#6c757d',
-                    fillColor: area.active ? '#28a745' : '#6c757d',
-                    fillOpacity: 0.2,
-                    weight: 2
-                }).addTo(areasGroup);
-                
-                polygon.bindPopup(`
-                    <strong>${area.name}</strong><br/>
-                    ${area.description || ''}<br/>
-                    <small>Status: ${area.active ? 'Active' : 'Inactive'}</small><br/>
-                    <small>Type: Polygon Area</small>
-                `);
+                try {
+                    console.log('Creating polygon for area:', area.name, area.coordinates);
+                    
+                    // Create polygon for map-based areas
+                    const polygon = L.polygon(area.coordinates, {
+                        color: area.active ? '#28a745' : '#6c757d',
+                        fillColor: area.active ? '#28a745' : '#6c757d',
+                        fillOpacity: 0.2,
+                        weight: 2
+                    }).addTo(areasGroup);
+                    
+                    polygon.bindPopup(`
+                        <strong>${area.name}</strong><br/>
+                        ${area.description || ''}<br/>
+                        <small>Status: ${area.active ? 'Active' : 'Inactive'}</small><br/>
+                        <small>Type: Polygon Area</small><br/>
+                        <small>Points: ${area.coordinates.length}</small>
+                    `);
+                    
+                    console.log('Successfully created polygon for:', area.name);
+                } catch (error) {
+                    console.error('Error creating polygon for', area.name, ':', error);
+                }
             } else if (area.type === 'postcode' && area.postcodes) {
                 // Create markers for postcode-based areas (positioned around London)
                 const marker = L.marker([51.5074, -0.1278], {
