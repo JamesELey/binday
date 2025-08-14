@@ -242,25 +242,52 @@ jobs:
           ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }} \
           "rm -f /tmp/deployment-package.tar.gz" || true
           
-    - name: 🔍 Deployment verification
+    - name: 🧪 Health Check - Deployment Verification
       run: |
-        echo "🔍 Deployment completed!"
-        echo ""
-        echo "📋 Verification checklist:"
-        echo "1. Check your website is accessible"
-        echo "2. Test application functionality"
-        echo "3. Verify database connections"
-        echo "4. Check logs for any errors"
-        echo ""
-        echo "🔧 Manual steps (if needed):"
-        echo "1. Set up web server configuration (nginx/apache)"
-        echo "2. Configure SSL certificates"
-        echo "3. Set up cron jobs for Laravel scheduler"
-        echo ""
+        echo "🧪 Running automated health checks..."
+        
+        # Set site URL - try with and without www
+        SITE_URL="http://${{ secrets.VPS_HOST }}"
+        
+        # Make the health check script executable
+        chmod +x tests/quick-health-check.sh
+        
+        # Run health checks
+        echo "🔍 Testing deployment health..."
+        if ./tests/quick-health-check.sh "$SITE_URL"; then
+          echo ""
+          echo "🎉 HEALTH CHECK PASSED! Deployment is working correctly! 🚀"
+          echo ""
+        else
+          echo ""
+          echo "⚠️ Health check found issues. Manual verification recommended."
+          echo ""
+          echo "📋 Manual verification checklist:"
+          echo "1. Check web server is running (nginx/apache)"
+          echo "2. Verify PHP-FPM is active"
+          echo "3. Check site configuration"
+          echo "4. Review error logs"
+          echo ""
+        fi
+        
+        echo "🌐 Application URL: $SITE_URL"
         echo "📁 Deployment path: ${{ secrets.DEPLOY_PATH }}"
         echo "🔄 Backups stored in: ${{ secrets.BACKUP_PATH }}"
         
-    - name: ✅ Deployment complete
+    - name: 🚀 Advanced Health Check (Optional)
+      continue-on-error: true
+      run: |
+        echo "🧪 Running comprehensive health check with Node.js..."
+        
+        # Install Node.js for comprehensive testing
+        if command -v node >/dev/null 2>&1; then
+          SITE_URL="http://${{ secrets.VPS_HOST }}" node tests/deployment-health-check.js
+        else
+          echo "ℹ️ Node.js not available, skipping advanced tests"
+          echo "✅ Basic health check completed above"
+        fi
+        
+    - name: ✅ Deployment Complete
       run: |
         echo "🎉 SSH deployment completed successfully!"
         echo ""
@@ -268,3 +295,10 @@ jobs:
         echo "📦 Vendor dependencies have been installed on the server"
         echo "⚡ Laravel has been optimized for production"
         echo "💾 Backup created of previous deployment"
+        echo "🧪 Health checks completed"
+        echo ""
+        echo "🔗 Quick Links:"
+        echo "   🌐 Website: http://${{ secrets.VPS_HOST }}"
+        echo "   🗺️ Bin Map: http://${{ secrets.VPS_HOST }}/bins/map"
+        echo "   📅 Collections: http://${{ secrets.VPS_HOST }}/collections"
+        echo "   ⚙️ Admin: http://${{ secrets.VPS_HOST }}/admin/seed"

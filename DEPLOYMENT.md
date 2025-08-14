@@ -36,6 +36,8 @@ git push origin main
 - 💾 **Automatic backup before each deployment**
 - 🔄 **Rollback capability**
 - 📊 **Real-time monitoring via GitHub Actions**
+- 🧪 **Automated health checks after deployment**
+- ✅ **Deployment verification & testing**
 
 ## 🌐 Application Features
 
@@ -50,6 +52,8 @@ git push origin main
 **Full setup instructions:** [VPS_SSH_DEPLOYMENT_GUIDE.md](VPS_SSH_DEPLOYMENT_GUIDE.md)
 
 **VPS setup script:** [setup-vps.sh](setup-vps.sh)
+
+**Health check tests:** [tests/README.md](tests/README.md)
 
 ## 🔧 Local Development
 
