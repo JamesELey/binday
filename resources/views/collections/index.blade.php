@@ -161,10 +161,10 @@
         <div style="margin-top: 30px; padding: 20px; background: #e8f5e8; border-radius: 5px;">
             <h3>📊 Collection Summary</h3>
             <ul>
-                <li><strong>Total Collections:</strong> {{ count($collections) }}</li>
-                <li><strong>Scheduled:</strong> {{ count(array_filter($collections, fn($c) => $c['status'] === 'Scheduled')) }}</li>
-                <li><strong>Completed:</strong> {{ count(array_filter($collections, fn($c) => $c['status'] === 'Completed')) }}</li>
-                <li><strong>Pending:</strong> {{ count(array_filter($collections, fn($c) => $c['status'] === 'Pending')) }}</li>
+                <li><strong>Total Collections:</strong> {{ $collections->count() }}</li>
+                <li><strong>Scheduled:</strong> {{ $collections->where('status', 'scheduled')->count() }}</li>
+                <li><strong>Completed:</strong> {{ $collections->where('status', 'completed')->count() }}</li>
+                <li><strong>Pending:</strong> {{ $collections->where('status', 'pending')->count() }}</li>
             </ul>
         </div>
     </div>
