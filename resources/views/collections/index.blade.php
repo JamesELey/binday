@@ -136,23 +136,23 @@
             <tbody>
                 @foreach($collections as $collection)
                 <tr>
-                    <td>#{{ $collection['id'] }}</td>
-                    <td><strong>{{ $collection['customer_name'] }}</strong></td>
-                    <td>{{ $collection['address'] }}</td>
+                    <td>#{{ $collection->id }}</td>
+                    <td><strong>{{ $collection->customer_name }}</strong></td>
+                    <td>{{ $collection->address }}</td>
                     <td>
-                        <span class="bin-type bin-{{ strtolower(str_replace(' ', '', $collection['bin_type'])) }}">
-                            {{ $collection['bin_type'] }}
+                        <span class="bin-type bin-{{ strtolower(str_replace(' ', '', $collection->bin_type)) }}">
+                            {{ $collection->bin_type }}
                         </span>
                     </td>
-                    <td>{{ date('M j, Y', strtotime($collection['collection_date'])) }}</td>
-                    <td>{{ $collection['collection_time'] }}</td>
+                    <td>{{ $collection->collection_date->format('M j, Y') }}</td>
+                    <td>{{ $collection->collection_time }}</td>
                     <td>
-                        <span class="status-badge status-{{ strtolower($collection['status']) }}">
-                            {{ $collection['status'] }}
+                        <span class="status-badge status-{{ strtolower($collection->status) }}">
+                            {{ $collection->status }}
                         </span>
                     </td>
-                    <td>{{ $collection['phone'] }}</td>
-                    <td>{{ $collection['notes'] ?: 'No notes' }}</td>
+                    <td>{{ $collection->phone }}</td>
+                    <td>{{ $collection->notes ?: 'No notes' }}</td>
                 </tr>
                 @endforeach
             </tbody>
