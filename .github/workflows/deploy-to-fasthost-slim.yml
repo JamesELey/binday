@@ -1,7 +1,10 @@
-name: 🚀 Deploy to Fasthost (Slim - No Vendor)
+name: 🚀 Deploy to Fasthost (DEPRECATED - Use SSH Deployment)
 
 on:
-  workflow_dispatch: # Manual triggering only for production deployments
+  # DEPRECATED: This FTP deployment has been replaced with SSH deployment
+  # Use deploy-to-vps-ssh.yml instead for faster, more reliable deployments
+  # See VPS_SSH_DEPLOYMENT_GUIDE.md for setup instructions
+  workflow_dispatch_disabled: # Manual triggering disabled
 
 jobs:
   deploy:

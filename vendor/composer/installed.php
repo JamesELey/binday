@@ -3,7 +3,7 @@
         'name' => 'thebinday/app',
         'pretty_version' => 'dev-main',
         'version' => 'dev-main',
-        'reference' => '6851d388cae25fe7d660a6cbb05bb03797a25332',
+        'reference' => '64c95e97d20b86f808eedd7be345e2f336bd51e1',
         'type' => 'project',
         'install_path' => __DIR__ . '/../../',
         'aliases' => array(),
@@ -1256,7 +1256,7 @@
         'thebinday/app' => array(
             'pretty_version' => 'dev-main',
             'version' => 'dev-main',
-            'reference' => '6851d388cae25fe7d660a6cbb05bb03797a25332',
+            'reference' => '64c95e97d20b86f808eedd7be345e2f336bd51e1',
             'type' => 'project',
             'install_path' => __DIR__ . '/../../',
             'aliases' => array(),

@@ -3,17 +3,17 @@
 
 $ErrorActionPreference = 'Stop'
 
-Write-Host "🚀 Creating optimized deployment package for Fasthost..." -ForegroundColor Green
+Write-Host "Creating optimized deployment package for Fasthost..." -ForegroundColor Green
 
 # 1. Clear all caches to reduce file count
-Write-Host "📦 Clearing Laravel caches..." -ForegroundColor Yellow
+Write-Host "Clearing Laravel caches..." -ForegroundColor Yellow
 php artisan cache:clear
 php artisan config:clear
 php artisan route:clear
 php artisan view:clear
 
 # 2. Install production dependencies only (reduces vendor size by ~50%)
-Write-Host "🔧 Installing production dependencies..." -ForegroundColor Yellow
+Write-Host "Installing production dependencies..." -ForegroundColor Yellow
 composer install --no-dev --optimize-autoloader --no-interaction
 
 # 3. Get project root
@@ -23,7 +23,7 @@ $projectRoot = Get-Location
 $tempDir = Join-Path $env:TEMP "binday-deploy-$(Get-Date -Format 'yyyyMMdd-HHmmss')"
 New-Item -ItemType Directory -Path $tempDir -Force | Out-Null
 
-Write-Host "📁 Copying files to temporary directory: $tempDir" -ForegroundColor Yellow
+Write-Host "Copying files to temporary directory: $tempDir" -ForegroundColor Yellow
 
 # 5. Copy files excluding problematic directories
 $excludePatterns = @(
@@ -53,31 +53,42 @@ Get-ChildItem -Path $projectRoot -Recurse -File -Force |
         -not $shouldExclude
     } | 
     ForEach-Object {
-        $sourcePath = $_.FullName
-        $relativePath = $sourcePath.Substring($projectRoot.Path.Length + 1)
-        $destPath = Join-Path $tempDir $relativePath
-        
-        # Create directory if it doesn't exist
-        $destDir = Split-Path $destPath -Parent
-        if (-not (Test-Path $destDir)) {
-            New-Item -ItemType Directory -Path $destDir -Force | Out-Null
+        try {
+            $sourcePath = $_.FullName
+            $relativePath = $sourcePath.Substring($projectRoot.Path.Length + 1)
+            $destPath = Join-Path $tempDir $relativePath
+            
+            # Skip files with problematic characters
+            if ($destPath -match '\[|\]') {
+                Write-Host "Skipping file with special characters: $relativePath" -ForegroundColor Yellow
+                return
+            }
+            
+            # Create directory if it doesn't exist
+            $destDir = Split-Path $destPath -Parent
+            if (-not (Test-Path $destDir)) {
+                New-Item -ItemType Directory -Path $destDir -Force | Out-Null
+            }
+            
+            Copy-Item $sourcePath $destPath -Force
         }
-        
-        Copy-Item $sourcePath $destPath
+        catch {
+            Write-Host "Warning: Could not copy file: $($_.FullName) - $($_.Exception.Message)" -ForegroundColor Yellow
+        }
     }
 
 # 6. Copy the production environment template as .env
 $prodEnvTemplate = Join-Path $projectRoot "production.env.example"
 if (Test-Path $prodEnvTemplate) {
-    Write-Host "📝 Adding production .env template..." -ForegroundColor Yellow
+    Write-Host "Adding production .env template..." -ForegroundColor Yellow
     Copy-Item $prodEnvTemplate (Join-Path $tempDir ".env")
 } else {
-    Write-Host "⚠️  Warning: production.env.example not found. You'll need to create .env manually." -ForegroundColor Red
+    Write-Host "Warning: production.env.example not found. You'll need to create .env manually." -ForegroundColor Red
 }
 
 # 7. Create the deployment zip
 $zipPath = Join-Path $projectRoot "binday-deploy.zip"
-Write-Host "🗜️  Creating deployment package: binday-deploy.zip" -ForegroundColor Yellow
+Write-Host "Creating deployment package: binday-deploy.zip" -ForegroundColor Yellow
 
 if (Test-Path $zipPath) {
     Remove-Item $zipPath -Force
@@ -95,10 +106,10 @@ $zipSize = (Get-Item $zipPath).Length
 $zipSizeMB = [math]::Round($zipSize / 1MB, 2)
 
 Write-Host ""
-Write-Host "✅ Deployment package created successfully!" -ForegroundColor Green
-Write-Host "📦 Package: binday-deploy.zip ($zipSizeMB MB)" -ForegroundColor Cyan
+Write-Host "Deployment package created successfully!" -ForegroundColor Green
+Write-Host "Package: binday-deploy.zip ($zipSizeMB MB)" -ForegroundColor Cyan
 Write-Host ""
-Write-Host "📋 Next steps:" -ForegroundColor Yellow
+Write-Host "Next steps:" -ForegroundColor Yellow
 Write-Host "1. Login to your Fasthost control panel" -ForegroundColor White
 Write-Host "2. Go to File Manager" -ForegroundColor White
 Write-Host "3. Navigate to /htdocs/" -ForegroundColor White
@@ -108,11 +119,11 @@ Write-Host "6. Rename extracted folder to 'binday'" -ForegroundColor White
 Write-Host "7. Upload root_index.php as /htdocs/index.php" -ForegroundColor White
 Write-Host "8. Update .env file with your database credentials" -ForegroundColor White
 Write-Host ""
-Write-Host "🔗 Your site will be available at: https://thebinday.co.uk" -ForegroundColor Green
+Write-Host "Your site will be available at: https://thebinday.co.uk" -ForegroundColor Green
 
 # 10. Restore development dependencies
 Write-Host ""
-Write-Host "🔄 Restoring development dependencies..." -ForegroundColor Yellow
+Write-Host "Restoring development dependencies..." -ForegroundColor Yellow
 composer install
 
-Write-Host "🎉 Ready for deployment!" -ForegroundColor Green
+Write-Host "Ready for deployment!" -ForegroundColor Green

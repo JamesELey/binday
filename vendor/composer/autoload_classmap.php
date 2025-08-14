@@ -34,6 +34,7 @@ return array(
     'App\\Repositories\\ConfigurationJsonRepository' => $vendorDir . '/laravel/pint/app/Repositories/ConfigurationJsonRepository.php',
     'App\\Repositories\\GitPathsRepository' => $vendorDir . '/laravel/pint/app/Repositories/GitPathsRepository.php',
     'App\\Services\\AddressLookup' => $baseDir . '/app/Services/AddressLookup.php',
+    'App\\Services\\PostcodePolygonService' => $baseDir . '/app/Services/PostcodePolygonService.php',
     'App\\ValueObjects\\Issue' => $vendorDir . '/laravel/pint/app/ValueObjects/Issue.php',
     'Attribute' => $vendorDir . '/symfony/polyfill-php80/Resources/stubs/Attribute.php',
     'Brick\\Math\\BigDecimal' => $vendorDir . '/brick/math/src/BigDecimal.php',

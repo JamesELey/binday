@@ -1,7 +1,10 @@
-name: 📦 Create Deployment Package
+name: 📦 Create Deployment Package (DEPRECATED - Use SSH Deployment)
 
 on:
-  workflow_dispatch: # Manual triggering for deployment packages
+  # DEPRECATED: Package deployment has been replaced with SSH deployment
+  # Use deploy-to-vps-ssh.yml instead for faster, more reliable deployments
+  # See VPS_SSH_DEPLOYMENT_GUIDE.md for setup instructions
+  workflow_dispatch_disabled: # Manual triggering disabled
     inputs:
       include_vendor:
         description: 'Include vendor directory (larger but complete)'

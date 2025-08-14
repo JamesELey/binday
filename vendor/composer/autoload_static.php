@@ -564,6 +564,7 @@ class ComposerStaticInit291f45e43f5bcb6a8c52860ca0be4d63
         'App\\Repositories\\ConfigurationJsonRepository' => __DIR__ . '/..' . '/laravel/pint/app/Repositories/ConfigurationJsonRepository.php',
         'App\\Repositories\\GitPathsRepository' => __DIR__ . '/..' . '/laravel/pint/app/Repositories/GitPathsRepository.php',
         'App\\Services\\AddressLookup' => __DIR__ . '/../..' . '/app/Services/AddressLookup.php',
+        'App\\Services\\PostcodePolygonService' => __DIR__ . '/../..' . '/app/Services/PostcodePolygonService.php',
         'App\\ValueObjects\\Issue' => __DIR__ . '/..' . '/laravel/pint/app/ValueObjects/Issue.php',
         'Attribute' => __DIR__ . '/..' . '/symfony/polyfill-php80/Resources/stubs/Attribute.php',
         'Brick\\Math\\BigDecimal' => __DIR__ . '/..' . '/brick/math/src/BigDecimal.php',

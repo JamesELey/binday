@@ -1,0 +1,247 @@
+name: 🚀 Deploy to VPS via SSH
+
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch:
+    inputs:
+      skip_vendor:
+        description: 'Skip vendor installation (if already up to date)'
+        required: false
+        default: 'false'
+        type: boolean
+
+jobs:
+  deploy:
+    name: 🚀 Deploy to VPS
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: 📥 Checkout code
+      uses: actions/checkout@v4
+      
+    - name: 🐘 Setup PHP
+      uses: shivammathur/setup-php@v2
+      with:
+        php-version: '8.1'
+        extensions: mbstring, xml, ctype, iconv, intl, pdo, pdo_mysql, dom, filter, gd, json, zip
+        tools: composer:v2
+        
+    - name: 📦 Get Composer Cache Directory
+      id: composer-cache
+      run: echo "dir=$(composer config cache-files-dir)" >> $GITHUB_OUTPUT
+      
+    - name: 🗄️ Cache Composer dependencies
+      uses: actions/cache@v3
+      with:
+        path: ${{ steps.composer-cache.outputs.dir }}
+        key: ${{ runner.os }}-composer-${{ hashFiles('**/composer.lock') }}
+        restore-keys: ${{ runner.os }}-composer-
+        
+    - name: 🔧 Install Composer dependencies for optimization
+      run: |
+        composer install --no-dev --optimize-autoloader --no-interaction --prefer-dist
+        
+    - name: 📝 Create production environment file
+      run: |
+        cp production.env.example .env
+        echo "APP_KEY=${{ secrets.APP_KEY }}" >> .env
+        echo "DB_CONNECTION=${{ secrets.DB_CONNECTION }}" >> .env
+        echo "DB_HOST=${{ secrets.DB_HOST }}" >> .env
+        echo "DB_PORT=${{ secrets.DB_PORT }}" >> .env
+        echo "DB_DATABASE=${{ secrets.DB_DATABASE }}" >> .env
+        echo "DB_USERNAME=${{ secrets.DB_USERNAME }}" >> .env
+        echo "DB_PASSWORD=${{ secrets.DB_PASSWORD }}" >> .env
+        
+    - name: 🧹 Clear Laravel caches
+      run: |
+        php artisan config:clear || true
+        php artisan route:clear || true
+        php artisan view:clear || true
+        php artisan cache:clear || true
+        
+    - name: ⚡ Optimize Laravel for production
+      run: |
+        php artisan config:cache
+        php artisan route:cache
+        php artisan view:cache
+        
+    - name: 📦 Create deployment package
+      run: |
+        # Create deployment directory
+        mkdir -p deployment-package
+        
+        # Copy application files (excluding vendor - we'll install on server)
+        rsync -av --exclude='.git' \
+                  --exclude='vendor' \
+                  --exclude='node_modules' \
+                  --exclude='tests' \
+                  --exclude='.github' \
+                  --exclude='storage/framework/cache/data' \
+                  --exclude='storage/logs/*.log' \
+                  --exclude='deploy_ftp.ps1' \
+                  --exclude='root_index.php' \
+                  --exclude='DEPLOYMENT_GUIDE.md' \
+                  --exclude='DEVELOPMENT_NOTES.md' \
+                  --exclude='GITHUB_ACTIONS_DEPLOYMENT.md' \
+                  --exclude='production.env.example' \
+                  --exclude='create-deployment-package.ps1' \
+                  --exclude='binday-deploy.zip' \
+                  ./ deployment-package/
+                  
+        # Ensure storage directories exist with proper structure
+        mkdir -p deployment-package/storage/framework/cache/data
+        mkdir -p deployment-package/storage/framework/sessions
+        mkdir -p deployment-package/storage/framework/views
+        mkdir -p deployment-package/bootstrap/cache
+        
+        # Create deployment archive
+        tar -czf deployment-package.tar.gz -C deployment-package .
+        
+        echo "📊 Deployment package size:"
+        ls -lh deployment-package.tar.gz
+        
+    - name: 🔑 Setup SSH key
+      run: |
+        mkdir -p ~/.ssh
+        echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/deploy_key
+        chmod 600 ~/.ssh/deploy_key
+        ssh-keyscan -H ${{ secrets.VPS_HOST }} >> ~/.ssh/known_hosts
+        
+    - name: 📤 Deploy to VPS
+      run: |
+        # Upload deployment package
+        scp -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no \
+          deployment-package.tar.gz \
+          ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }}:/tmp/
+        
+        # Deploy via SSH
+        ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no \
+          ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }} << 'ENDSSH'
+          
+          # Set deployment variables
+          DEPLOY_PATH="${{ secrets.DEPLOY_PATH }}"
+          BACKUP_PATH="${{ secrets.BACKUP_PATH }}"
+          
+          echo "🚀 Starting deployment to $DEPLOY_PATH"
+          
+          # Create backup of current deployment (if exists)
+          if [ -d "$DEPLOY_PATH" ]; then
+            echo "📦 Creating backup..."
+            mkdir -p "$BACKUP_PATH"
+            BACKUP_NAME="backup-$(date +%Y%m%d-%H%M%S)"
+            cp -r "$DEPLOY_PATH" "$BACKUP_PATH/$BACKUP_NAME"
+            echo "✅ Backup created: $BACKUP_PATH/$BACKUP_NAME"
+            
+            # Keep only last 5 backups
+            cd "$BACKUP_PATH"
+            ls -1t | tail -n +6 | xargs -r rm -rf
+          fi
+          
+          # Create deployment directory
+          mkdir -p "$DEPLOY_PATH"
+          
+          # Extract new deployment
+          echo "📦 Extracting deployment package..."
+          cd "$DEPLOY_PATH"
+          tar -xzf /tmp/deployment-package.tar.gz
+          
+          # Set proper permissions
+          echo "🔒 Setting file permissions..."
+          find "$DEPLOY_PATH" -type f -exec chmod 644 {} \;
+          find "$DEPLOY_PATH" -type d -exec chmod 755 {} \;
+          chmod -R 775 "$DEPLOY_PATH/storage"
+          chmod -R 775 "$DEPLOY_PATH/bootstrap/cache"
+          
+          # Make artisan executable
+          chmod +x "$DEPLOY_PATH/artisan"
+          
+          echo "✅ Files deployed successfully"
+          
+        ENDSSH
+        
+    - name: 🔧 Install dependencies and optimize on VPS
+      if: ${{ github.event.inputs.skip_vendor != 'true' }}
+      run: |
+        ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no \
+          ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }} << 'ENDSSH'
+          
+          DEPLOY_PATH="${{ secrets.DEPLOY_PATH }}"
+          
+          echo "📦 Installing Composer dependencies..."
+          cd "$DEPLOY_PATH"
+          
+          # Install production dependencies
+          composer install --no-dev --optimize-autoloader --no-interaction --prefer-dist
+          
+          echo "✅ Dependencies installed successfully"
+          
+        ENDSSH
+        
+    - name: ⚡ Post-deployment optimization
+      run: |
+        ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no \
+          ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }} << 'ENDSSH'
+          
+          DEPLOY_PATH="${{ secrets.DEPLOY_PATH }}"
+          
+          echo "⚡ Running post-deployment optimization..."
+          cd "$DEPLOY_PATH"
+          
+          # Clear caches
+          php artisan config:clear
+          php artisan route:clear
+          php artisan view:clear
+          php artisan cache:clear
+          
+          # Optimize for production
+          php artisan config:cache
+          php artisan route:cache
+          php artisan view:cache
+          
+          # Run migrations (if needed)
+          php artisan migrate --force
+          
+          # Set final permissions
+          chmod -R 775 storage bootstrap/cache
+          
+          echo "✅ Post-deployment optimization complete"
+          
+        ENDSSH
+        
+    - name: 🧹 Cleanup
+      run: |
+        # Remove SSH key
+        rm -f ~/.ssh/deploy_key
+        
+        # Clean up deployment package on VPS
+        ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no \
+          ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }} \
+          "rm -f /tmp/deployment-package.tar.gz" || true
+          
+    - name: 🔍 Deployment verification
+      run: |
+        echo "🔍 Deployment completed!"
+        echo ""
+        echo "📋 Verification checklist:"
+        echo "1. Check your website is accessible"
+        echo "2. Test application functionality"
+        echo "3. Verify database connections"
+        echo "4. Check logs for any errors"
+        echo ""
+        echo "🔧 Manual steps (if needed):"
+        echo "1. Set up web server configuration (nginx/apache)"
+        echo "2. Configure SSL certificates"
+        echo "3. Set up cron jobs for Laravel scheduler"
+        echo ""
+        echo "📁 Deployment path: ${{ secrets.DEPLOY_PATH }}"
+        echo "🔄 Backups stored in: ${{ secrets.BACKUP_PATH }}"
+        
+    - name: ✅ Deployment complete
+      run: |
+        echo "🎉 SSH deployment completed successfully!"
+        echo ""
+        echo "🚀 Your application has been deployed to the VPS"
+        echo "📦 Vendor dependencies have been installed on the server"
+        echo "⚡ Laravel has been optimized for production"
+        echo "💾 Backup created of previous deployment"

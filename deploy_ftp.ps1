@@ -1,3 +1,9 @@
+# ⚠️  DEPRECATED: This FTP deployment script has been replaced with SSH deployment
+# 🚀 Use the new SSH deployment method instead: .github/workflows/deploy-to-vps-ssh.yml
+# 📖 See VPS_SSH_DEPLOYMENT_GUIDE.md for setup instructions
+#
+# This file is kept for reference only and should not be used for new deployments.
+
 $ErrorActionPreference = 'Stop'
 
 # Tunables

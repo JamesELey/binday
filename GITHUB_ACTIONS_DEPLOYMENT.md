@@ -1,4 +1,15 @@
-# 🚀 **GitHub Actions Deployment Guide for Fasthost**
+# 🚀 **GitHub Actions Deployment Guide (DEPRECATED - Use SSH Deployment)**
+
+## ⚠️ **NOTICE: This guide is deprecated**
+
+**🎯 For new deployments, use the SSH deployment method instead:**
+- **New Workflow**: `.github/workflows/deploy-to-vps-ssh.yml`
+- **Setup Guide**: `VPS_SSH_DEPLOYMENT_GUIDE.md`
+- **Benefits**: Faster (2-5 minutes), more reliable, professional CI/CD
+
+---
+
+# 🚀 **GitHub Actions Deployment Guide for Fasthost (Legacy)**
 
 ## 🎯 **Overview**
 
