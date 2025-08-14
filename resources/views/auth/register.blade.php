@@ -184,17 +184,7 @@
             margin-left: 24px;
         }
         
-        .nav-links {
-            text-align: center;
-            margin-bottom: 20px;
-        }
-        
-        .nav-links a {
-            color: #667eea;
-            text-decoration: none;
-            font-size: 14px;
-            margin: 0 10px;
-        }
+
         
         @media (max-width: 600px) {
             .form-row {
@@ -204,16 +194,10 @@
     </style>
 </head>
 <body>
-    @include('components.auth-nav')
     <div class="register-container">
         <div class="logo">
             <h1>🗑️ BinDay</h1>
             <p>Join our Bin Collection Management System</p>
-        </div>
-        
-        <div class="nav-links">
-            <a href="{{ route('bins.index') }}">← Back to Home</a>
-            <a href="{{ route('bins.map') }}">View Map</a>
         </div>
         
         @if(session('success'))

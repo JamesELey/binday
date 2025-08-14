@@ -157,30 +157,65 @@
             color: #1976d2;
         }
         
-        .nav-links {
-            text-align: center;
+        .demo-credentials {
+            background: #fff3cd;
+            border: 1px solid #ffeaa7;
+            border-radius: 8px;
+            padding: 16px;
             margin-bottom: 20px;
         }
         
-        .nav-links a {
-            color: #667eea;
-            text-decoration: none;
-            font-size: 14px;
-            margin: 0 10px;
+        .demo-credentials h4 {
+            color: #856404;
+            margin-bottom: 12px;
+            font-size: 16px;
+        }
+        
+        .demo-account {
+            background: #f8f9fa;
+            border-radius: 6px;
+            padding: 12px;
+            margin-bottom: 8px;
+            font-family: 'Courier New', monospace;
+            font-size: 13px;
+        }
+        
+        .demo-account:last-child {
+            margin-bottom: 0;
+        }
+        
+        .demo-account .role {
+            font-weight: bold;
+            color: #495057;
+            margin-bottom: 4px;
+        }
+        
+        .demo-account .credentials {
+            color: #007bff;
         }
     </style>
 </head>
 <body>
-    @include('components.auth-nav')
     <div class="login-container">
         <div class="logo">
             <h1>🗑️ BinDay</h1>
             <p>Bin Collection Management System</p>
         </div>
         
-        <div class="nav-links">
-            <a href="{{ route('bins.index') }}">← Back to Home</a>
-            <a href="{{ route('bins.map') }}">View Map</a>
+        <div class="demo-credentials">
+            <h4>🔑 Demo Login Credentials</h4>
+            <div class="demo-account">
+                <div class="role">👑 Admin Access:</div>
+                <div class="credentials">admin@binday.com / password123</div>
+            </div>
+            <div class="demo-account">
+                <div class="role">👷 Worker Access:</div>
+                <div class="credentials">worker@binday.com / password123</div>
+            </div>
+            <div class="demo-account">
+                <div class="role">👤 Customer Access:</div>
+                <div class="credentials">customer@binday.com / password123</div>
+            </div>
         </div>
         
         @if(session('success'))
