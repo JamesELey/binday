@@ -196,7 +196,7 @@
                 <div class="action-buttons">
                     <a href="{{ route('seed.index') }}" class="btn btn-primary">🗂️ Data Seeding</a>
                     <a href="{{ route('areas.index') }}" class="btn btn-success">🏘️ Manage Areas</a>
-                    <a href="#" class="btn btn-info">👥 Manage Users</a>
+                    <a href="{{ route('admin.users.index') }}" class="btn btn-info">👥 Manage Users</a>
                 </div>
             </div>
             
@@ -220,7 +220,7 @@
                 <div class="action-buttons">
                     <a href="{{ route('bins.map') }}" class="btn btn-primary">🗺️ Interactive Map</a>
                     <a href="{{ route('areas.createMap') }}" class="btn btn-success">➕ Create Area</a>
-                    <a href="#" class="btn btn-warning">👷 Assign Workers</a>
+                    <a href="{{ route('admin.workers.assign') }}" class="btn btn-warning">👷 Assign Workers</a>
                 </div>
             </div>
             

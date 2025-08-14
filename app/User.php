@@ -87,9 +87,8 @@ class User extends Authenticatable
     public function getManageableAreaIds(): array
     {
         if ($this->isAdmin()) {
-            // Admin can manage all areas - get all area IDs from JSON file
-            $areasData = $this->getAllAreas();
-            return array_column($areasData, 'id');
+            // Admin can manage all areas - get all area IDs from database
+            return Area::pluck('id')->toArray();
         }
 
         if ($this->isWorker()) {
@@ -193,5 +192,16 @@ class User extends Authenticatable
         }
 
         return Area::whereIn('id', $this->assigned_area_ids)->get();
+    }
+
+    /**
+     * Relationship: Areas assigned to this user
+     */
+    public function areas()
+    {
+        return $this->belongsToMany(Area::class, null, 'user_id', 'area_id')
+                    ->whereJsonContains('assigned_area_ids', function($query) {
+                        return $query->select('id');
+                    });
     }
 }

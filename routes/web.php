@@ -92,8 +92,24 @@ Route::middleware(['role:admin,worker'])->group(function () {
     Route::post('/areas/convert-all-postcodes', [AllowedAreaController::class, 'convertAllPostcodeAreas'])->name('areas.convertAllPostcodes');
 });
 
-// Data Seeding Routes (Admin only)
+// Admin-only Routes
 Route::middleware(['role:admin'])->group(function () {
+    // User Management Routes
+    Route::get('/admin/users', [\App\Http\Controllers\Admin\AdminController::class, 'manageUsers'])->name('admin.users.index');
+    Route::get('/admin/users/create', [\App\Http\Controllers\Admin\AdminController::class, 'createUser'])->name('admin.users.create');
+    Route::post('/admin/users', [\App\Http\Controllers\Admin\AdminController::class, 'storeUser'])->name('admin.users.store');
+    Route::get('/admin/users/{user}/edit', [\App\Http\Controllers\Admin\AdminController::class, 'editUser'])->name('admin.users.edit');
+    Route::put('/admin/users/{user}', [\App\Http\Controllers\Admin\AdminController::class, 'updateUser'])->name('admin.users.update');
+    Route::patch('/admin/users/{user}/toggle', [\App\Http\Controllers\Admin\AdminController::class, 'toggleUserStatus'])->name('admin.users.toggle');
+    Route::delete('/admin/users/{user}', [\App\Http\Controllers\Admin\AdminController::class, 'destroyUser'])->name('admin.users.destroy');
+
+    // Worker Assignment Routes
+    Route::get('/admin/workers/assign', [\App\Http\Controllers\Admin\AdminController::class, 'assignWorkers'])->name('admin.workers.assign');
+    Route::post('/admin/workers/update', [\App\Http\Controllers\Admin\AdminController::class, 'updateWorkerAssignments'])->name('admin.workers.update');
+    Route::get('/admin/workers/{worker}/assignments', [\App\Http\Controllers\Admin\AdminController::class, 'getWorkerAssignments'])->name('admin.workers.assignments');
+    Route::post('/admin/workers/bulk-update', [\App\Http\Controllers\Admin\AdminController::class, 'bulkUpdateWorkerAssignments'])->name('admin.workers.bulk-update');
+
+    // Data Seeding Routes
     Route::get('/admin/seed', [DataSeederController::class, 'index'])->name('seed.index');
     Route::post('/admin/seed/all', [DataSeederController::class, 'seedAll'])->name('seed.all');
     Route::delete('/admin/seed/delete', [DataSeederController::class, 'deleteAll'])->name('seed.delete');
