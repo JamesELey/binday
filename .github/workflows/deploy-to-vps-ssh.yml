@@ -166,6 +166,17 @@ jobs:
           # Make artisan executable
           chmod +x "$DEPLOY_PATH/artisan"
           
+          # Setup environment file if it doesn't exist
+          echo "🔧 Checking environment configuration..."
+          if [ ! -f "$DEPLOY_PATH/.env" ]; then
+            echo "📝 Creating .env from production template..."
+            cp "$DEPLOY_PATH/production.env.example" "$DEPLOY_PATH/.env"
+            echo "⚠️  .env file created from template - you need to configure database settings!"
+            echo "   Edit $DEPLOY_PATH/.env and set your database credentials"
+          else
+            echo "✅ .env file already exists"
+          fi
+          
           echo "✅ Files deployed successfully"
           
         ENDSSH
