@@ -26,17 +26,25 @@ class DataSeederController extends Controller
     }
 
     /**
-     * Seed all demo data
+     * Seed all demo data using database seeders
      */
     public function seedAll()
     {
         try {
-            $this->seedEccleshallArea();
-            $this->seedEccleshallCollections();
+            // Use Laravel's database seeders instead of JSON files
+            \Artisan::call('db:seed', [
+                '--class' => 'Database\\Seeders\\AreaSeeder',
+                '--force' => true
+            ]);
+            
+            \Artisan::call('db:seed', [
+                '--class' => 'Database\\Seeders\\CollectionSeeder', 
+                '--force' => true
+            ]);
             
             return response()->json([
                 'success' => true,
-                'message' => 'All demo data seeded successfully!'
+                'message' => 'All demo data seeded successfully using database!'
             ]);
         } catch (\Exception $e) {
             return response()->json([
@@ -68,16 +76,19 @@ class DataSeederController extends Controller
     }
 
     /**
-     * Seed only Eccleshall area
+     * Seed only areas using database seeder
      */
     public function seedEccleshallAreaOnly()
     {
         try {
-            $area = $this->seedEccleshallArea();
+            \Artisan::call('db:seed', [
+                '--class' => 'Database\\Seeders\\AreaSeeder',
+                '--force' => true
+            ]);
+            
             return response()->json([
                 'success' => true,
-                'message' => 'Eccleshall area seeded successfully!',
-                'area' => $area
+                'message' => 'Areas seeded successfully using database!'
             ]);
         } catch (\Exception $e) {
             return response()->json([
@@ -88,16 +99,22 @@ class DataSeederController extends Controller
     }
 
     /**
-     * Seed only collections
+     * Seed only collections using database seeder
      */
     public function seedCollectionsOnly()
     {
         try {
-            $collections = $this->seedEccleshallCollections();
+            \Artisan::call('db:seed', [
+                '--class' => 'Database\\Seeders\\CollectionSeeder',
+                '--force' => true
+            ]);
+            
+            $collectionsCount = \App\Collection::count();
+            
             return response()->json([
                 'success' => true,
-                'message' => 'Collections seeded successfully!',
-                'collections' => count($collections)
+                'message' => 'Collections seeded successfully using database!',
+                'collections' => $collectionsCount
             ]);
         } catch (\Exception $e) {
             return response()->json([
@@ -392,33 +409,23 @@ class DataSeederController extends Controller
     }
 
     /**
-     * Get existing collections
+     * Get existing collections from database
      */
     private function getExistingCollections(): array
     {
-        $storagePath = storage_path('app/collections.json');
-        
-        if (!file_exists($storagePath)) {
-            return [];
-        }
-        
-        $data = file_get_contents($storagePath);
-        return json_decode($data, true) ?: [];
+        return \App\Collection::all()->toArray();
     }
 
     /**
-     * Save collections to storage
+     * Save collections to database (using Laravel seeders)
      */
     private function saveCollections(array $newCollections): void
     {
-        $existingCollections = $this->getExistingCollections();
-        $allCollections = array_merge($existingCollections, $newCollections);
-        
-        // Sanitize all string data to handle apostrophes and special characters
-        $allCollections = $this->sanitizeCollectionsData($allCollections);
-        
-        $storagePath = storage_path('app/collections.json');
-        file_put_contents($storagePath, json_encode($allCollections, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE));
+        // Use the database seeder instead of JSON files
+        \Artisan::call('db:seed', [
+            '--class' => 'Database\\Seeders\\CollectionSeeder',
+            '--force' => true
+        ]);
     }
 
     /**
@@ -481,59 +488,36 @@ class DataSeederController extends Controller
     }
 
     /**
-     * Delete all collections
+     * Delete all collections from database
      */
     public function deleteAllCollections()
     {
-        $storagePath = storage_path('app/collections.json');
-        if (file_exists($storagePath)) {
-            unlink($storagePath);
-        }
+        \App\Collection::truncate();
         return true;
     }
 
     /**
-     * Delete all areas
+     * Delete all areas from database
      */
     public function deleteAllAreas()
     {
-        $storagePath = storage_path('app/allowed_areas.json');
-        if (file_exists($storagePath)) {
-            unlink($storagePath);
-        }
+        \App\Area::truncate();
         return true;
     }
 
     /**
-     * Get data summary
+     * Get data summary from database
      */
     public function getDataSummary()
     {
-        $areas = [];
-        $collections = [];
-        
-        $areasPath = storage_path('app/allowed_areas.json');
-        if (file_exists($areasPath)) {
-            $data = file_get_contents($areasPath);
-            $areas = json_decode($data, true) ?: [];
-        }
-        
-        $collectionsPath = storage_path('app/collections.json');
-        if (file_exists($collectionsPath)) {
-            $data = file_get_contents($collectionsPath);
-            $collections = json_decode($data, true) ?: [];
-        }
+        $areas = \App\Area::all();
+        $collections = \App\Collection::all();
         
         return response()->json([
-            'areas' => count($areas),
-            'collections' => count($collections),
-            'active_areas' => count(array_filter($areas, fn($a) => $a['active'] ?? false)),
-            'recent_collections' => count(array_filter($collections, function($c) {
-                $date = new \DateTime($c['collection_date'] ?? 'now');
-                $now = new \DateTime();
-                $diff = $now->diff($date)->days;
-                return $diff <= 14;
-            }))
+            'areas' => $areas->count(),
+            'collections' => $collections->count(),
+            'active_areas' => $areas->where('active', true)->count(),
+            'recent_collections' => $collections->where('collection_date', '>=', now()->subDays(14))->count()
         ]);
     }
 }

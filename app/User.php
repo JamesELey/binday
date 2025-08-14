@@ -123,18 +123,11 @@ class User extends Authenticatable
     }
 
     /**
-     * Get all areas from JSON file
+     * Get all areas from database
      */
     private function getAllAreas(): array
     {
-        $storagePath = storage_path('app/allowed_areas.json');
-        
-        if (!file_exists($storagePath)) {
-            return [];
-        }
-        
-        $data = file_get_contents($storagePath);
-        return json_decode($data, true) ?: [];
+        return Area::active()->get()->toArray();
     }
 
     /**
