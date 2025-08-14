@@ -151,63 +151,49 @@ class AllowedAreaController extends Controller
         // Handle both traditional form and JSON requests
         if ($request->isJson()) {
             // JSON request from map interface
-            $data = $request->all();
+            $validated = $request->validate([
+                'name' => 'required|string|max:255',
+                'description' => 'nullable|string|max:500',
+                'active' => 'boolean',
+                'coordinates' => 'required|array|min:3',
+                'coordinates.*' => 'array|size:2',
+                'coordinates.*.*' => 'numeric',
+                'bin_types' => 'nullable|array'
+            ]);
             
-            // Validate required fields
-            if (empty($data['name'])) {
-                return response()->json(['error' => 'Area name is required'], 400);
-            }
-            
-            if (empty($data['coordinates']) || !is_array($data['coordinates'])) {
-                return response()->json(['error' => 'Valid coordinates are required'], 400);
-            }
-            
-            // Create new area
-            $areas = $this->getAllAreas();
-            $newArea = [
-                'id' => $this->getNextId(),
-                'name' => $data['name'],
-                'description' => $data['description'] ?? '',
-                'active' => $data['active'] ?? true,
-                'type' => 'map',
+            // Create new polygon area in database
+            $area = Area::create([
+                'name' => $validated['name'],
+                'description' => $validated['description'] ?? '',
+                'active' => $validated['active'] ?? true,
+                'type' => 'polygon',
                 'postcodes' => null,
-                'coordinates' => $data['coordinates'],
-                'bin_types' => $data['bin_types'] ?? \App\Http\Controllers\BinScheduleController::getDefaultBinTypes(),
-                'created_at' => date('Y-m-d H:i:s')
-            ];
-            
-            $areas[] = $newArea;
-            $this->saveAreas($areas);
+                'coordinates' => $validated['coordinates'],
+                'bin_types' => $validated['bin_types'] ?? Area::getDefaultBinTypes()
+            ]);
             
             return response()->json([
                 'success' => true,
                 'message' => 'Area created successfully with map coordinates',
-                'area' => $newArea
+                'area' => $area
             ]);
         } else {
-            // Traditional form request (debugging)
-            \Log::info('Postcode area creation attempt', [
-                'request_data' => $request->all(),
-                'is_json' => $request->isJson(),
-                'content_type' => $request->header('Content-Type')
-            ]);
-            
-            $request->validate([
+            // Traditional form request for postcode areas
+            $validated = $request->validate([
                 'name' => 'required|string|max:255',
                 'postcodes' => 'required|string|min:2',
-                'active' => 'required|in:0,1',
-                'description' => 'nullable|string|max:500'
+                'active' => 'required|boolean',
+                'description' => 'nullable|string|max:500',
+                'bin_types' => 'nullable|array'
             ], [
                 'name.required' => 'Area name is required',
                 'postcodes.required' => 'At least one postcode is required',
                 'postcodes.min' => 'Postcodes must be at least 2 characters long',
-                'active.required' => 'Please select a status for this area',
-                'active.in' => 'Status must be either Active or Inactive'
+                'active.required' => 'Please select a status for this area'
             ]);
             
             // Clean and validate postcodes
-            $postcodes = $request->input('postcodes');
-            $postcodes = trim($postcodes);
+            $postcodes = trim($validated['postcodes']);
             $postcodes = preg_replace('/\s*,\s*/', ', ', $postcodes); // Normalize spacing
             
             // Basic validation for postcode format
@@ -217,31 +203,19 @@ class AllowedAreaController extends Controller
                     ->withInput();
             }
             
-            // Create new postcode-based area
-            $areas = $this->getAllAreas();
-            $newArea = [
-                'id' => $this->getNextId(),
-                'name' => trim($request->input('name')),
-                'description' => trim($request->input('description', '')),
+            // Create new postcode-based area in database
+            $area = Area::create([
+                'name' => $validated['name'],
+                'description' => $validated['description'] ?? '',
                 'postcodes' => $postcodes,
-                'active' => $request->boolean('active'),
+                'active' => $validated['active'],
                 'type' => 'postcode',
                 'coordinates' => null,
-                'bin_types' => $request->input('bin_types', \App\Http\Controllers\BinScheduleController::getDefaultBinTypes()),
-                'created_at' => date('Y-m-d H:i:s'),
-                'updated_at' => date('Y-m-d H:i:s')
-            ];
-            
-            $areas[] = $newArea;
-            $this->saveAreas($areas);
-            
-            \Log::info('Postcode area created successfully', [
-                'area' => $newArea,
-                'total_areas' => count($areas)
+                'bin_types' => $validated['bin_types'] ?? Area::getDefaultBinTypes()
             ]);
             
             return redirect()->route('areas.index')
-                ->with('success', 'Postcode-based area "' . $newArea['name'] . '" created successfully!');
+                ->with('success', 'Postcode-based area "' . $area->name . '" created successfully!');
         }
     }
 
@@ -480,24 +454,15 @@ class AllowedAreaController extends Controller
      */
     public function destroy($id)
     {
-        $areas = $this->getAllAreas();
-        $newAreas = [];
-        $deleted = false;
+        $area = Area::find($id);
         
-        foreach ($areas as $area) {
-            if ($area['id'] != $id) {
-                $newAreas[] = $area;
-            } else {
-                $deleted = true;
-            }
-        }
-        
-        if (!$deleted) {
+        if (!$area) {
             return redirect()->route('areas.index')
                 ->with('error', 'Area not found');
         }
         
-        $this->saveAreas($newAreas);
+        $areaName = $area->name;
+        $area->delete();
         
         return redirect()->route('areas.index')
             ->with('success', 'Allowed area deleted successfully!');
@@ -748,8 +713,7 @@ class AllowedAreaController extends Controller
      */
     public function manageBinTypes($id)
     {
-        $areas = $this->getAllAreas();
-        $area = collect($areas)->firstWhere('id', (int)$id);
+        $area = Area::find($id);
         
         if (!$area) {
             return redirect()->route('areas.index')->with('error', 'Area not found!');
@@ -786,17 +750,9 @@ class AllowedAreaController extends Controller
             'active_bin_types.*' => 'string|max:50'
         ]);
 
-        $areas = $this->getAllAreas();
-        $areaIndex = null;
+        $area = Area::find($id);
         
-        foreach ($areas as $index => $area) {
-            if ($area['id'] == $id) {
-                $areaIndex = $index;
-                break;
-            }
-        }
-
-        if ($areaIndex === null) {
+        if (!$area) {
             return redirect()->route('areas.index')->with('error', 'Area not found!');
         }
 
@@ -815,10 +771,9 @@ class AllowedAreaController extends Controller
         $allBinTypes = array_values($allBinTypes); // Re-index array
 
         // Update the area
-        $areas[$areaIndex]['bin_types'] = $allBinTypes;
-        $areas[$areaIndex]['updated_at'] = date('Y-m-d H:i:s');
-
-        $this->saveAreas($areas);
+        $area->update([
+            'bin_types' => $allBinTypes
+        ]);
 
         return redirect()->route('areas.manageBinTypes', $id)
                         ->with('success', 'Bin types updated successfully!');
