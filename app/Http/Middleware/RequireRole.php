@@ -34,8 +34,21 @@ class RequireRole
             return $next($request);
         }
 
+        // Handle comma-separated roles (e.g., "admin,worker")
+        $allowedRoles = [];
+        foreach ($roles as $role) {
+            if (strpos($role, ',') !== false) {
+                $allowedRoles = array_merge($allowedRoles, explode(',', $role));
+            } else {
+                $allowedRoles[] = $role;
+            }
+        }
+        
+        // Remove duplicates and trim whitespace
+        $allowedRoles = array_unique(array_map('trim', $allowedRoles));
+
         // Check if user has any of the required roles
-        if (in_array($user->role, $roles)) {
+        if (in_array($user->role, $allowedRoles)) {
             return $next($request);
         }
 

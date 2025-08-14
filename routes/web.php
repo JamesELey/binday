@@ -10,44 +10,46 @@ use App\Http\Controllers\Admin\SettingsController;
 use App\Http\Controllers\Admin\AuthController;
 use App\Http\Controllers\AuthController as PublicAuthController;
 
+// Public routes (no authentication required)
 Route::get('/', [BinScheduleController::class, 'index'])->name('bins.index');
-Route::get('/bins/create', [BinScheduleController::class, 'create'])->name('bins.create');
-Route::post('/bins', [BinScheduleController::class, 'store'])->name('bins.store');
-Route::delete('/bins/{bin}', [BinScheduleController::class, 'destroy'])->name('bins.destroy');
-Route::get('/bins/{bin}/edit', [BinScheduleController::class, 'edit'])->name('bins.edit');
-Route::put('/bins/{bin}', [BinScheduleController::class, 'update'])->name('bins.update');
-
-// Address lookup API
-Route::get('/api/lookup', [BinScheduleController::class, 'lookup'])->name('api.lookup');
-
-// Map page + data
 Route::get('/bins/map', [BinScheduleController::class, 'map'])->name('bins.map');
 Route::get('/bins/map-by-date', [BinScheduleController::class, 'mapByDate'])->name('bins.mapByDate');
 Route::get('/api/bins', [BinScheduleController::class, 'apiAll'])->name('api.bins');
-Route::post('/bins/geocode-all', [BinScheduleController::class, 'geocodeAll'])->name('bins.geocodeAll');
-// Convenience GET route to trigger geocoding (dev-friendly)
-Route::get('/bins/geocode-all', [BinScheduleController::class, 'geocodeAll'])->name('bins.geocodeAll.get');
-
-// Allowed areas
-Route::get('/areas', [AllowedAreaController::class, 'index'])->name('areas.index');
-Route::get('/areas/create-map', [AllowedAreaController::class, 'createMap'])->name('areas.createMap');
-Route::post('/areas', [AllowedAreaController::class, 'store'])->name('areas.store');
-Route::get('/areas/{area}/edit', [AllowedAreaController::class, 'edit'])->name('areas.edit');
-Route::put('/areas/{area}', [AllowedAreaController::class, 'update'])->name('areas.update');
-Route::delete('/areas/{area}', [AllowedAreaController::class, 'destroy'])->name('areas.destroy');
 Route::get('/api/areas', [AllowedAreaController::class, 'apiList'])->name('api.areas');
-Route::post('/api/geocode', [AllowedAreaController::class, 'geocodePostcode'])->name('api.geocode');
+Route::get('/api/lookup', [BinScheduleController::class, 'lookup'])->name('api.lookup');
 
-// Bin type management for areas
-Route::get('/areas/{area}/bin-types', [AllowedAreaController::class, 'manageBinTypes'])->name('areas.manageBinTypes');
-Route::put('/areas/{area}/bin-types', [AllowedAreaController::class, 'updateBinTypes'])->name('areas.updateBinTypes');
-Route::post('/areas/{area}/bin-types/add', [AllowedAreaController::class, 'addBinType'])->name('areas.addBinType');
-Route::delete('/areas/{area}/bin-types/remove', [AllowedAreaController::class, 'removeBinType'])->name('areas.removeBinType');
+// Protected routes (authentication required)
+Route::middleware(['auth'])->group(function () {
+    Route::get('/bins/create', [BinScheduleController::class, 'create'])->name('bins.create');
+    Route::post('/bins', [BinScheduleController::class, 'store'])->name('bins.store');
+    Route::delete('/bins/{bin}', [BinScheduleController::class, 'destroy'])->name('bins.destroy');
+    Route::get('/bins/{bin}/edit', [BinScheduleController::class, 'edit'])->name('bins.edit');
+    Route::put('/bins/{bin}', [BinScheduleController::class, 'update'])->name('bins.update');
+    Route::post('/bins/geocode-all', [BinScheduleController::class, 'geocodeAll'])->name('bins.geocodeAll');
+    Route::get('/bins/geocode-all', [BinScheduleController::class, 'geocodeAll'])->name('bins.geocodeAll.get');
+});
 
-// Postcode to polygon conversion
-Route::post('/areas/{area}/convert-to-polygon', [AllowedAreaController::class, 'convertToPolygon'])->name('areas.convertToPolygon');
-Route::get('/areas/{area}/polygon-preview', [AllowedAreaController::class, 'getPolygonPreview'])->name('areas.polygonPreview');
-Route::post('/areas/convert-all-postcodes', [AllowedAreaController::class, 'convertAllPostcodeAreas'])->name('areas.convertAllPostcodes');
+// Areas management (Admin/Worker only)
+Route::middleware(['role:admin,worker'])->group(function () {
+    Route::get('/areas', [AllowedAreaController::class, 'index'])->name('areas.index');
+    Route::get('/areas/create-map', [AllowedAreaController::class, 'createMap'])->name('areas.createMap');
+    Route::post('/areas', [AllowedAreaController::class, 'store'])->name('areas.store');
+    Route::get('/areas/{area}/edit', [AllowedAreaController::class, 'edit'])->name('areas.edit');
+    Route::put('/areas/{area}', [AllowedAreaController::class, 'update'])->name('areas.update');
+    Route::delete('/areas/{area}', [AllowedAreaController::class, 'destroy'])->name('areas.destroy');
+    Route::post('/api/geocode', [AllowedAreaController::class, 'geocodePostcode'])->name('api.geocode');
+    
+    // Bin type management for areas
+    Route::get('/areas/{area}/bin-types', [AllowedAreaController::class, 'manageBinTypes'])->name('areas.manageBinTypes');
+    Route::put('/areas/{area}/bin-types', [AllowedAreaController::class, 'updateBinTypes'])->name('areas.updateBinTypes');
+    Route::post('/areas/{area}/bin-types/add', [AllowedAreaController::class, 'addBinType'])->name('areas.addBinType');
+    Route::delete('/areas/{area}/bin-types/remove', [AllowedAreaController::class, 'removeBinType'])->name('areas.removeBinType');
+    
+    // Postcode to polygon conversion
+    Route::post('/areas/{area}/convert-to-polygon', [AllowedAreaController::class, 'convertToPolygon'])->name('areas.convertToPolygon');
+    Route::get('/areas/{area}/polygon-preview', [AllowedAreaController::class, 'getPolygonPreview'])->name('areas.polygonPreview');
+    Route::post('/areas/convert-all-postcodes', [AllowedAreaController::class, 'convertAllPostcodeAreas'])->name('areas.convertAllPostcodes');
+});
 
 // Enquiry
 Route::get('/enquiry', [EnquiryController::class, 'create'])->name('enquiry.create');
@@ -80,14 +82,16 @@ Route::middleware(['role'])->group(function () {
     Route::get('/customer/dashboard', [\App\Http\Controllers\Auth\AuthController::class, 'dashboard'])->name('customer.dashboard');
 });
 
-// Collection Management Routes
-Route::get('/collections', [CollectionController::class, 'index'])->name('collections.index');
-Route::get('/collections/create', [CollectionController::class, 'create'])->name('collections.create');
-Route::post('/collections', [CollectionController::class, 'store'])->name('collections.store');
-Route::get('/collections/manage', [CollectionController::class, 'manage'])->name('collections.manage');
-Route::get('/collections/{id}/edit', [CollectionController::class, 'edit'])->name('collections.edit');
-Route::put('/collections/{id}', [CollectionController::class, 'update'])->name('collections.update');
-Route::delete('/collections/{id}', [CollectionController::class, 'destroy'])->name('collections.destroy');
+// Collection Management Routes (Authentication required)
+Route::middleware(['auth'])->group(function () {
+    Route::get('/collections', [CollectionController::class, 'index'])->name('collections.index');
+    Route::get('/collections/create', [CollectionController::class, 'create'])->name('collections.create');
+    Route::post('/collections', [CollectionController::class, 'store'])->name('collections.store');
+    Route::get('/collections/manage', [CollectionController::class, 'manage'])->name('collections.manage');
+    Route::get('/collections/{id}/edit', [CollectionController::class, 'edit'])->name('collections.edit');
+    Route::put('/collections/{id}', [CollectionController::class, 'update'])->name('collections.update');
+    Route::delete('/collections/{id}', [CollectionController::class, 'destroy'])->name('collections.destroy');
+});
 
 // Data Seeding Routes (Admin only)
 Route::middleware(['role:admin'])->group(function () {

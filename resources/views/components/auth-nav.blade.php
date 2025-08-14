@@ -15,20 +15,31 @@
                 <a href="{{ url('/bins/map') }}" style="text-decoration: none; color: #6c757d; padding: 5px 10px; border-radius: 4px; transition: all 0.3s;">
                     🗺️ Map
                 </a>
-                <a href="{{ url('/collections') }}" style="text-decoration: none; color: #6c757d; padding: 5px 10px; border-radius: 4px; transition: all 0.3s;">
-                    📋 Collections
-                </a>
                 
                 @auth
+                    <a href="{{ url('/collections') }}" style="text-decoration: none; color: #6c757d; padding: 5px 10px; border-radius: 4px; transition: all 0.3s;">
+                        📋 Collections
+                    </a>
+                    
                     @if(auth()->user()->isAdmin())
                         <a href="{{ url('/admin/seed') }}" style="text-decoration: none; color: #dc3545; padding: 5px 10px; border-radius: 4px; transition: all 0.3s;">
                             ⚙️ Admin
                         </a>
                     @endif
                     
+                    @if(auth()->user()->isAdmin() || auth()->user()->isWorker())
+                        <a href="{{ url('/areas') }}" style="text-decoration: none; color: #17a2b8; padding: 5px 10px; border-radius: 4px; transition: all 0.3s;">
+                            🏢 Areas
+                        </a>
+                    @endif
+                    
                     <a href="{{ route('collections.manage') }}" style="text-decoration: none; color: #28a745; padding: 5px 10px; border-radius: 4px; transition: all 0.3s;">
                         📊 Manage
                     </a>
+                @else
+                    <span style="color: #6c757d; font-style: italic; padding: 5px 10px;">
+                        🔒 Login to access Collections
+                    </span>
                 @endauth
             </div>
         </div>
