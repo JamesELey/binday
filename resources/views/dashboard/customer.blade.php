@@ -171,6 +171,7 @@
     </style>
 </head>
 <body>
+    @include('components.auth-nav')
     <div class="header">
         <h1>👤 Customer Dashboard</h1>
         <div class="user-info">Welcome, {{ $user->name }}!</div>

@@ -280,6 +280,7 @@
     </style>
 </head>
 <body>
+    @include('components.auth-nav')
 <header>
     <h2>Bin Collections Map</h2>
     <p><a href="{{ route('bins.index') }}">Back to list</a></p>

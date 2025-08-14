@@ -96,6 +96,7 @@
     </style>
 </head>
 <body>
+    @include('components.auth-nav')
     <div class="header">
         <h1>📋 All Collections</h1>
         <p>View all booked waste collection schedules and their current status.</p>

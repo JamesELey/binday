@@ -171,6 +171,7 @@
     </style>
 </head>
 <body>
+    @include('components.auth-nav')
     <div class="login-container">
         <div class="logo">
             <h1>🗑️ BinDay</h1>

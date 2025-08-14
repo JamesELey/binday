@@ -136,6 +136,7 @@
     </style>
 </head>
 <body>
+    @include('components.auth-nav')
     <div class="header">
         <h1>🌱 Seed Data Management</h1>
         <p>Manage demo data for testing and development. Generate Eccleshall area with sample collections or clear all data.</p>

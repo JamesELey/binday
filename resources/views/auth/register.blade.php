@@ -204,6 +204,7 @@
     </style>
 </head>
 <body>
+    @include('components.auth-nav')
     <div class="register-container">
         <div class="logo">
             <h1>🗑️ BinDay</h1>

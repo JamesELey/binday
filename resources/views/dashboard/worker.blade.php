@@ -182,6 +182,7 @@
     </style>
 </head>
 <body>
+    @include('components.auth-nav')
     <div class="header">
         <h1>👷 Worker Dashboard</h1>
         <div class="user-info">Welcome back, {{ $user->name }}!</div>

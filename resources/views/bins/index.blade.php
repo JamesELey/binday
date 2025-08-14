@@ -44,6 +44,7 @@
     </style>
 </head>
 <body>
+    @include('components.auth-nav')
     <div class="header">
         <h1>🗑️ Bin Collection Schedules</h1>
         <p>Manage your waste collection schedules and view the interactive map.</p>
