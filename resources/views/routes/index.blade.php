@@ -158,9 +158,43 @@
             background: #e0a800;
         }
 
+
+
         .btn-sm {
             padding: 6px 12px;
             font-size: 12px;
+        }
+
+        .area-btn {
+            display: inline-block;
+            padding: 4px 8px;
+            margin: 2px;
+            font-size: 11px;
+            border-radius: 12px;
+            background: #f8f9fa;
+            border: 1px solid #dee2e6;
+            cursor: pointer;
+            transition: all 0.2s;
+            text-decoration: none;
+            color: #495057;
+        }
+
+        .area-btn:hover {
+            background: #e9ecef;
+            border-color: #adb5bd;
+        }
+
+        .area-btn.loading {
+            background: #fff3cd;
+            border-color: #ffeaa7;
+            cursor: not-allowed;
+        }
+
+        #route-stats {
+            background: #f8f9fa;
+            padding: 8px;
+            border-radius: 4px;
+            border-left: 3px solid #28a745;
         }
 
         .btn-block {
@@ -425,14 +459,24 @@
                     <div class="loading">Select date and click "Load Collections" to start</div>
                 </div>
                 
+                <!-- Manual Optimization -->
                 <button type="button" class="btn btn-success btn-block" onclick="optimizeRoute()" id="optimize-btn" style="display: none;">
-                    🎯 Optimize Route
+                    🎯 Optimize Selected
                 </button>
+                
+                <!-- Auto-Optimization by Area -->
+                <div id="auto-optimize-panel" style="display: none; margin-top: 10px;">
+                    <div style="border-top: 1px solid #eee; padding-top: 10px;">
+                        <h4 style="font-size: 14px; margin-bottom: 8px; color: #666;">🚀 Auto-Optimize by Area</h4>
+                        <div id="area-buttons-container"></div>
+                    </div>
+                </div>
             </div>
 
             <!-- Optimized Route -->
             <div class="route-panel" id="route-container" style="display: none;">
                 <h3>🚛 Optimized Route</h3>
+                <div id="route-stats" style="margin-bottom: 10px; font-size: 13px; color: #666;"></div>
                 <div id="route-list"></div>
                 <div style="margin-top: 15px; text-align: center;">
                     <button type="button" class="btn btn-warning btn-sm" onclick="clearRoute()">
@@ -486,8 +530,10 @@
                     displayCollections(data.collections);
                     updateStats();
                     displayCollectionsOnMap(data.collections);
+                    showAutoOptimizeOptions(data.collections);
                 } else {
                     container.innerHTML = '<div class="alert alert-warning">No collections found for selected criteria</div>';
+                    document.getElementById('auto-optimize-panel').style.display = 'none';
                 }
             } catch (error) {
                 console.error('Error loading collections:', error);
@@ -611,25 +657,7 @@
             }
         }
 
-        // Display optimized route in sidebar
-        function displayOptimizedRoute(route) {
-            const container = document.getElementById('route-container');
-            const listContainer = document.getElementById('route-list');
-            
-            const html = route.map(item => `
-                <div class="route-item">
-                    <div class="route-order">${item.order}</div>
-                    <div class="route-details">
-                        <div class="route-name">${item.type === 'start' ? item.name : item.customer_name}</div>
-                        <div class="route-address">${item.type === 'start' ? 'Depot/Starting Point' : item.address}</div>
-                    </div>
-                    ${item.distance_from_previous ? `<div class="route-distance">${item.distance_from_previous.toFixed(2)}km</div>` : ''}
-                </div>
-            `).join('');
-            
-            listContainer.innerHTML = html;
-            container.style.display = 'block';
-        }
+        // Display optimized route in sidebar (replaced by enhanced version below)
 
         // Display route on map
         function displayRouteOnMap(route) {
@@ -652,6 +680,8 @@
         // Clear route
         function clearRoute() {
             selectedCollections = [];
+            currentRoute = []; // Clear stored route data
+            
             document.querySelectorAll('.collection-item').forEach(item => {
                 item.classList.remove('selected');
             });
@@ -665,6 +695,125 @@
             
             updateStats();
             displayCollectionsOnMap(collectionsData);
+        }
+
+        // Show auto-optimization options grouped by area
+        function showAutoOptimizeOptions(collections) {
+            const panel = document.getElementById('auto-optimize-panel');
+            const container = document.getElementById('area-buttons-container');
+            
+            // Group collections by area
+            const areaGroups = {};
+            collections.forEach(collection => {
+                const area = collection.area || 'Unassigned';
+                if (!areaGroups[area]) {
+                    areaGroups[area] = [];
+                }
+                areaGroups[area].push(collection);
+            });
+            
+            // Create buttons for each area that has collections
+            const buttons = Object.keys(areaGroups).map(area => {
+                const count = areaGroups[area].length;
+                return `<button class="area-btn" onclick="autoOptimizeArea('${area}')" data-area="${area}">
+                    ${area} (${count})
+                </button>`;
+            }).join('');
+            
+            container.innerHTML = buttons;
+            panel.style.display = Object.keys(areaGroups).length > 0 ? 'block' : 'none';
+        }
+
+        // Auto-optimize all collections in a specific area
+        async function autoOptimizeArea(areaName) {
+            const areaCollections = collectionsData.filter(c => (c.area || 'Unassigned') === areaName);
+            
+            if (areaCollections.length === 0) {
+                alert('No collections found for this area');
+                return;
+            }
+            
+            // Set button to loading state
+            const button = document.querySelector(`[data-area="${areaName}"]`);
+            const originalText = button.textContent;
+            button.classList.add('loading');
+            button.textContent = 'Optimizing...';
+            button.disabled = true;
+            
+            try {
+                // Select all collections in this area
+                selectedCollections = areaCollections.map(c => c.id);
+                
+                // Update UI to show selected collections
+                document.querySelectorAll('.collection-item').forEach(item => {
+                    const id = parseInt(item.dataset.id);
+                    if (selectedCollections.includes(id)) {
+                        item.classList.add('selected');
+                    } else {
+                        item.classList.remove('selected');
+                    }
+                });
+                
+                // Update map
+                displayCollectionsOnMap(collectionsData);
+                updateStats();
+                
+                // Optimize route
+                await optimizeRoute();
+                
+            } catch (error) {
+                console.error('Error auto-optimizing area:', error);
+                alert('Error optimizing route for this area');
+            } finally {
+                // Reset button state
+                button.classList.remove('loading');
+                button.textContent = originalText;
+                button.disabled = false;
+            }
+        }
+
+        // Google Maps integration removed
+
+        // Enhanced display optimized route function
+        let currentRoute = [];
+        function displayOptimizedRoute(route) {
+            currentRoute = route;
+            
+            const container = document.getElementById('route-container');
+            const listContainer = document.getElementById('route-list');
+            const statsContainer = document.getElementById('route-stats');
+            
+            // Calculate route statistics
+            const totalDistance = route.reduce((sum, item) => {
+                return sum + (item.distance_from_previous || 0);
+            }, 0);
+            
+            const estimatedTime = Math.ceil(totalDistance * 3); // Rough estimate: 3 minutes per km
+            const collectionsCount = route.filter(item => item.type === 'collection').length;
+            
+            // Display statistics
+            statsContainer.innerHTML = `
+                📊 <strong>${collectionsCount}</strong> collections • 
+                📏 <strong>${totalDistance.toFixed(1)} km</strong> • 
+                ⏱️ Est. <strong>${estimatedTime} mins</strong>
+            `;
+            
+            const html = route.map(item => `
+                <div class="route-item" data-lat="${item.latitude}" data-lng="${item.longitude}">
+                    <div class="route-order">${item.order || '📍'}</div>
+                    <div class="route-details">
+                        <div class="route-name">${item.name || item.customer_name}</div>
+                        ${item.address ? `<div class="route-address">${item.address}</div>` : ''}
+                        ${item.bin_type ? `<span class="bin-type bin-${item.bin_type.toLowerCase().replace(' ', '')}">${item.bin_type}</span>` : ''}
+                        ${item.distance_from_previous ? `<span class="route-distance">${item.distance_from_previous.toFixed(1)} km</span>` : ''}
+                    </div>
+                </div>
+            `).join('');
+            
+            listContainer.innerHTML = html;
+            container.style.display = 'block';
+            
+            // Route displayed - no additional buttons needed
         }
 
         // Initialize on page load
