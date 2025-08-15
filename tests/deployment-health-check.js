@@ -21,13 +21,10 @@ class HealthChecker {
         console.log('🧪 Starting BinDay Deployment Health Checks...\n');
         console.log(`🎯 Target URL: ${this.baseUrl}\n`);
 
-        // Core functionality tests
+        // Core functionality tests for authenticated application
         await this.testSiteAccessibility();
-        await this.testHomePage();
-        await this.testBinMapPage();
-        await this.testCollectionsPage();
-        await this.testAreasPage();
-        await this.testAdminSeedPage();
+        await this.testAuthenticationPages();
+        await this.testProtectedPagesRedirect();
         
         // Technical health tests
         await this.testLaravelFramework();
@@ -94,90 +91,69 @@ class HealthChecker {
         console.log('🌐 Testing Site Accessibility...');
         const response = await this.makeRequest('/');
         
+        // For authenticated app, home should redirect to login (302)
+        const isAccessible = response.status === 302 || response.status === 200;
+        
         this.test(
             'Site is accessible',
-            response.status === 200,
-            response.status === 200 ? 
-                `Response time: ${response.responseTime}ms` : 
+            isAccessible,
+            isAccessible ? 
+                `Site responds correctly (${response.status}) - Response time: ${response.responseTime}ms` : 
                 `Status: ${response.status}, Error: ${response.error || 'Unknown'}`
         );
     }
 
-    async testHomePage() {
-        console.log('🏠 Testing Home Page...');
-        const response = await this.makeRequest('/');
+    async testAuthenticationPages() {
+        console.log('🔐 Testing Authentication Pages...');
+        const loginResponse = await this.makeRequest('/login');
         
-        if (response.status === 200) {
-            const hasTitle = response.data.includes('<title>') || response.data.includes('BinDay');
-            const hasHtml = response.data.includes('<html') || response.data.includes('<!DOCTYPE');
+        this.test(
+            'Login page accessible',
+            loginResponse.status === 200,
+            loginResponse.status === 200 ? 
+                `Login page loads correctly - ${loginResponse.responseTime}ms` : 
+                `Login page status: ${loginResponse.status}`
+        );
+
+        // Test if login page contains proper form elements
+        if (loginResponse.status === 200) {
+            const hasLoginForm = loginResponse.data.includes('password') || 
+                                loginResponse.data.includes('login') ||
+                                loginResponse.data.includes('email');
             
             this.test(
-                'Home page loads with valid HTML',
-                hasHtml,
-                hasHtml ? 'Valid HTML structure detected' : 'No valid HTML structure found'
-            );
-            
-            this.test(
-                'Home page has proper title/content',
-                hasTitle,
-                hasTitle ? 'Page title/content found' : 'No title or BinDay content found'
+                'Login page has authentication form',
+                hasLoginForm,
+                hasLoginForm ? 'Login form elements detected' : 'No login form found'
             );
         } else {
-            this.test('Home page loads with valid HTML', false, 'Home page not accessible');
-            this.test('Home page has proper title/content', false, 'Home page not accessible');
+            this.test('Login page has authentication form', false, 'Login page not accessible');
         }
     }
 
-    async testBinMapPage() {
-        console.log('🗺️ Testing Bin Map Page...');
-        const response = await this.makeRequest('/bins/map');
+    async testProtectedPagesRedirect() {
+        console.log('🔒 Testing Protected Pages (should redirect to login)...');
         
-        this.test(
-            'Bin Map page accessible',
-            response.status === 200,
-            response.status === 200 ? 
-                `Loaded in ${response.responseTime}ms` : 
-                `Status: ${response.status}`
-        );
-    }
+        const protectedPages = [
+            { path: '/bins/map', name: 'Bin Map page' },
+            { path: '/collections', name: 'Collections page' },
+            { path: '/routes', name: 'Route Planner page' }
+        ];
 
-    async testCollectionsPage() {
-        console.log('📅 Testing Collections Page...');
-        const response = await this.makeRequest('/collections');
-        
-        this.test(
-            'Collections page accessible',
-            response.status === 200,
-            response.status === 200 ? 
-                `Loaded in ${response.responseTime}ms` : 
-                `Status: ${response.status}`
-        );
-    }
-
-    async testAreasPage() {
-        console.log('🏘️ Testing Areas Page...');
-        const response = await this.makeRequest('/areas');
-        
-        this.test(
-            'Areas page accessible',
-            response.status === 200,
-            response.status === 200 ? 
-                `Loaded in ${response.responseTime}ms` : 
-                `Status: ${response.status}`
-        );
-    }
-
-    async testAdminSeedPage() {
-        console.log('⚙️ Testing Admin Seed Page...');
-        const response = await this.makeRequest('/admin/seed');
-        
-        this.test(
-            'Admin seed page accessible',
-            response.status === 200,
-            response.status === 200 ? 
-                `Loaded in ${response.responseTime}ms` : 
-                `Status: ${response.status}`
-        );
+        for (const page of protectedPages) {
+            const response = await this.makeRequest(page.path);
+            
+            // Protected pages should redirect to login (302) or require auth
+            const properlyProtected = response.status === 302 || response.status === 401;
+            
+            this.test(
+                `${page.name} properly protected`,
+                properlyProtected,
+                properlyProtected ? 
+                    `Correctly redirects/blocks (${response.status})` : 
+                    `Unexpected status: ${response.status} (should be 302 or 401)`
+            );
+        }
     }
 
     async testLaravelFramework() {
@@ -202,18 +178,19 @@ class HealthChecker {
     async testDatabaseConnection() {
         console.log('🗄️ Testing Database Connection...');
         
-        // Test if pages that likely use database load
-        const response = await this.makeRequest('/collections');
+        // Test login page which requires database for user authentication
+        const loginResponse = await this.makeRequest('/login');
         
-        // If collections page loads without 500 error, DB is likely working
-        const dbWorking = response.status === 200;
+        // If login page loads without 500 error, database connection is likely working
+        // (Login page requires database to check users, render forms, etc.)
+        const dbWorking = loginResponse.status === 200;
         
         this.test(
             'Database connection working',
             dbWorking,
             dbWorking ? 
-                'Database-dependent pages load successfully' : 
-                'Database-dependent pages failing (possible DB issue)'
+                'Login page loads (database connection working)' : 
+                'Login page fails to load (possible database issue)'
         );
     }
 

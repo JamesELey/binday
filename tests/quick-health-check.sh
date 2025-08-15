@@ -57,15 +57,17 @@ test_url() {
     echo ""
 }
 
-# Run tests
+# Run tests for authenticated application
 echo "🌐 Testing Site Accessibility..."
-test_url "$SITE_URL/" "Home page"
+test_url "$SITE_URL/" "Home page" "302"  # Should redirect to login
 
-echo "🗺️ Testing Application Pages..."
-test_url "$SITE_URL/bins/map" "Bin Map page"
-test_url "$SITE_URL/collections" "Collections page"
-test_url "$SITE_URL/areas" "Areas page"
-test_url "$SITE_URL/admin/seed" "Admin Seed page"
+echo "🔐 Testing Authentication Pages..."
+test_url "$SITE_URL/login" "Login page" "200"  # Login should be accessible
+
+echo "🗺️ Testing Protected Pages (should redirect to login)..."
+test_url "$SITE_URL/bins/map" "Bin Map page" "302"  # Should redirect to login
+test_url "$SITE_URL/collections" "Collections page" "302"  # Should redirect to login
+test_url "$SITE_URL/routes" "Route Planner page" "302"  # Should redirect to login
 
 # Test for common Laravel assets (might 404, that's ok)
 echo "📦 Testing Assets..."
