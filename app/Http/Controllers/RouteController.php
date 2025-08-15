@@ -32,50 +32,83 @@ class RouteController extends Controller
      */
     public function getCollections(Request $request)
     {
-        $date = $request->get('date', now()->format('Y-m-d'));
-        $areaIds = $request->get('areas', []);
-        $user = Auth::user();
-        
-        // Build query for collections
-        $query = Collection::with(['area', 'user'])
-            ->where('collection_date', $date)
-            ->whereNotNull('latitude')
-            ->whereNotNull('longitude');
-        
-        // Filter by areas if specified
-        if (!empty($areaIds)) {
-            $query->whereIn('area_id', $areaIds);
+        try {
+            $date = $request->get('date', now()->format('Y-m-d'));
+            $areaIds = $request->get('areas', []);
+            
+            // Handle comma-separated area IDs from frontend
+            if (is_string($areaIds) && !empty($areaIds)) {
+                $areaIds = array_filter(explode(',', $areaIds));
+            } elseif (!is_array($areaIds)) {
+                $areaIds = [];
+            }
+            
+            $user = Auth::user();
+            
+            if (!$user) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Authentication required'
+                ], 401);
+            }
+            
+            // Build query for collections
+            $query = Collection::with(['area', 'user'])
+                ->where('collection_date', $date)
+                ->whereNotNull('latitude')
+                ->whereNotNull('longitude');
+            
+            // Filter by areas if specified
+            if (!empty($areaIds)) {
+                $query->whereIn('area_id', $areaIds);
+            }
+            
+            // For workers, only show collections in their areas (if area assignments exist)
+            if ($user->isWorker()) {
+                // For now, workers can see all collections
+                // Later you might add: $query->whereIn('area_id', $user->assignedAreas->pluck('id'));
+            }
+            
+            $collections = $query->orderBy('collection_time')
+                ->orderBy('customer_name')
+                ->get();
+            
+            return response()->json([
+                'success' => true,
+                'collections' => $collections->map(function ($collection) {
+                    return [
+                        'id' => $collection->id,
+                        'customer_name' => $collection->customer_name,
+                        'address' => $collection->address,
+                        'bin_type' => $collection->bin_type,
+                        'collection_time' => $collection->collection_time ? $collection->collection_time->format('H:i') : null,
+                        'status' => $collection->status,
+                        'notes' => $collection->notes,
+                        'latitude' => (float) $collection->latitude,
+                        'longitude' => (float) $collection->longitude,
+                        'area' => $collection->area ? $collection->area->name : 'Unassigned'
+                    ];
+                }),
+                'date' => $date,
+                'total' => $collections->count(),
+                'debug' => [
+                    'requested_date' => $date,
+                    'requested_areas' => $areaIds,
+                    'user_role' => $user ? $user->role : 'none'
+                ]
+            ]);
+        } catch (\Exception $e) {
+            \Log::error('Error in getCollections: ' . $e->getMessage(), [
+                'trace' => $e->getTraceAsString(),
+                'request' => $request->all()
+            ]);
+            
+            return response()->json([
+                'success' => false,
+                'message' => 'An error occurred while loading collections',
+                'error' => config('app.debug') ? $e->getMessage() : 'Internal server error'
+            ], 500);
         }
-        
-        // For workers, only show collections in their areas (if area assignments exist)
-        if ($user->role === 'worker') {
-            // For now, workers can see all collections
-            // Later you might add: $query->whereIn('area_id', $user->assignedAreas->pluck('id'));
-        }
-        
-        $collections = $query->orderBy('collection_time')
-            ->orderBy('customer_name')
-            ->get();
-        
-        return response()->json([
-            'success' => true,
-            'collections' => $collections->map(function ($collection) {
-                return [
-                    'id' => $collection->id,
-                    'customer_name' => $collection->customer_name,
-                    'address' => $collection->address,
-                    'bin_type' => $collection->bin_type,
-                    'collection_time' => $collection->collection_time ? $collection->collection_time->format('H:i') : null,
-                    'status' => $collection->status,
-                    'notes' => $collection->notes,
-                    'latitude' => (float) $collection->latitude,
-                    'longitude' => (float) $collection->longitude,
-                    'area' => $collection->area ? $collection->area->name : 'Unassigned'
-                ];
-            }),
-            'date' => $date,
-            'total' => $collections->count()
-        ]);
     }
 
     /**
