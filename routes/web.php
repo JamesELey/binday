@@ -28,19 +28,39 @@ Route::get('/', function () {
     return redirect()->route('login');
 });
 
-// All other routes require authentication
+// Customer-only routes (authenticated users, but some routes restricted by role)
 Route::middleware(['auth'])->group(function () {
-    // Homepage and main navigation
+    // Basic navigation (all authenticated users)
     Route::get('/home', [BinScheduleController::class, 'index'])->name('bins.index');
+    
+    // Collection Management Routes (all authenticated users)
+    Route::get('/collections/create', [CollectionController::class, 'create'])->name('collections.create');
+    Route::post('/collections', [CollectionController::class, 'store'])->name('collections.store');
+    Route::get('/collections/manage', [CollectionController::class, 'manage'])->name('collections.manage');
+    Route::get('/collections/{id}/edit', [CollectionController::class, 'edit'])->name('collections.edit');
+    Route::put('/collections/{id}', [CollectionController::class, 'update'])->name('collections.update');
+    Route::delete('/collections/{id}', [CollectionController::class, 'destroy'])->name('collections.destroy');
+    
+    // Enquiry (all authenticated users)
+    Route::get('/enquiry', [EnquiryController::class, 'create'])->name('enquiry.create');
+    Route::post('/enquiry', [EnquiryController::class, 'store'])->name('enquiry.store');
+});
+
+// Worker and Admin routes
+Route::middleware(['auth', 'role:admin,worker'])->group(function () {
+    // Map views (Workers and Admins only)
     Route::get('/bins/map', [BinScheduleController::class, 'map'])->name('bins.map');
     Route::get('/bins/map-by-date', [BinScheduleController::class, 'mapByDate'])->name('bins.mapByDate');
     
-    // API endpoints
+    // API endpoints for operational data (Workers and Admins only)
     Route::get('/api/bins', [BinScheduleController::class, 'apiAll'])->name('api.bins');
     Route::get('/api/areas', [AllowedAreaController::class, 'apiList'])->name('api.areas');
     Route::get('/api/lookup', [BinScheduleController::class, 'lookup'])->name('api.lookup');
     
-    // Bin management routes
+    // Collection viewing (Workers and Admins only)
+    Route::get('/collections', [CollectionController::class, 'index'])->name('collections.index');
+    
+    // Bin management routes (Workers and Admins only)
     Route::get('/bins/create', [BinScheduleController::class, 'create'])->name('bins.create');
     Route::post('/bins', [BinScheduleController::class, 'store'])->name('bins.store');
     Route::delete('/bins/{bin}', [BinScheduleController::class, 'destroy'])->name('bins.destroy');
@@ -49,25 +69,12 @@ Route::middleware(['auth'])->group(function () {
     Route::post('/bins/geocode-all', [BinScheduleController::class, 'geocodeAll'])->name('bins.geocodeAll');
     Route::get('/bins/geocode-all', [BinScheduleController::class, 'geocodeAll'])->name('bins.geocodeAll.get');
     
-    // Collection Management Routes
-    Route::get('/collections', [CollectionController::class, 'index'])->name('collections.index');
-    Route::get('/collections/create', [CollectionController::class, 'create'])->name('collections.create');
-    Route::post('/collections', [CollectionController::class, 'store'])->name('collections.store');
-    Route::get('/collections/manage', [CollectionController::class, 'manage'])->name('collections.manage');
-    Route::get('/collections/{id}/edit', [CollectionController::class, 'edit'])->name('collections.edit');
-    Route::put('/collections/{id}', [CollectionController::class, 'update'])->name('collections.update');
-    Route::delete('/collections/{id}', [CollectionController::class, 'destroy'])->name('collections.destroy');
-    
-    // Route Planning (Workers and Admins)
+    // Route Planning (Workers and Admins only)
     Route::get('/routes', [RouteController::class, 'index'])->name('routes.index');
     Route::get('/api/routes/collections', [RouteController::class, 'getCollections'])->name('api.routes.collections');
     Route::post('/api/routes/optimize', [RouteController::class, 'optimizeRoute'])->name('api.routes.optimize');
     Route::get('/api/routes/stats', [RouteController::class, 'getRouteStats'])->name('api.routes.stats');
     Route::put('/api/routes/collections/{id}/status', [RouteController::class, 'updateCollectionStatus'])->name('api.routes.updateStatus');
-    
-    // Enquiry
-    Route::get('/enquiry', [EnquiryController::class, 'create'])->name('enquiry.create');
-    Route::post('/enquiry', [EnquiryController::class, 'store'])->name('enquiry.store');
 });
 
 // Role-based dashboards (requires authentication)

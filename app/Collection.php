@@ -27,6 +27,9 @@ class Collection extends Model
         'longitude',
         'user_id',
         'area_id',
+        'is_recurring',
+        'parent_collection_id',
+        'last_generated_at',
     ];
 
     /**
@@ -37,6 +40,8 @@ class Collection extends Model
         'collection_time' => 'datetime:H:i',
         'latitude' => 'decimal:7',
         'longitude' => 'decimal:7',
+        'is_recurring' => 'boolean',
+        'last_generated_at' => 'datetime',
     ];
 
     // Status constants
@@ -179,6 +184,58 @@ class Collection extends Model
         if ($area) {
             $this->area_id = $area->id;
         }
+    }
+
+    /**
+     * Get the parent collection (if this is a recurring collection)
+     */
+    public function parent()
+    {
+        return $this->belongsTo(Collection::class, 'parent_collection_id');
+    }
+
+    /**
+     * Get all child collections generated from this recurring collection
+     */
+    public function children()
+    {
+        return $this->hasMany(Collection::class, 'parent_collection_id');
+    }
+
+    /**
+     * Scope to get only recurring collections
+     */
+    public function scopeRecurring($query)
+    {
+        return $query->where('is_recurring', true);
+    }
+
+    /**
+     * Scope to get only one-time collections
+     */
+    public function scopeOneTime($query)
+    {
+        return $query->where('is_recurring', false);
+    }
+
+    /**
+     * Check if this collection is part of a recurring series
+     */
+    public function isPartOfRecurringSeries(): bool
+    {
+        return $this->is_recurring || $this->parent_collection_id !== null;
+    }
+
+    /**
+     * Get the next scheduled collection date (2 weeks from this one)
+     */
+    public function getNextScheduledDate(): ?Carbon
+    {
+        if (!$this->is_recurring) {
+            return null;
+        }
+
+        return $this->collection_date->copy()->addWeeks(2);
     }
 
     /**

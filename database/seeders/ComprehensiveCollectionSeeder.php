@@ -82,9 +82,25 @@ class ComprehensiveCollectionSeeder extends Seeder
                 continue; // Skip if we can't generate valid coordinates
             }
             
-            // Select a random customer or create a realistic name
-            $customer = $customers->random();
-            $customerName = $this->generateCustomerName();
+            // Select a customer, but limit demo customer to only 2 collections total
+            $demoCustomer = $customers->firstWhere('email', 'customer@binday.com');
+            $demoCollectionsCount = Collection::where('customer_email', 'customer@binday.com')->count();
+            
+            // If demo customer already has 2 collections, exclude them
+            $availableCustomers = $customers->filter(function($customer) use ($demoCustomer, $demoCollectionsCount) {
+                if ($customer->email === 'customer@binday.com' && $demoCollectionsCount >= 2) {
+                    return false;
+                }
+                return true;
+            });
+            
+            // If no customers available, skip this collection
+            if ($availableCustomers->isEmpty()) {
+                continue;
+            }
+            
+            $customer = $availableCustomers->random();
+            $customerName = $customer ? $customer->name : $this->generateCustomerName();
             
             // Generate realistic address
             $address = $this->generateAddressForArea($area, $i);

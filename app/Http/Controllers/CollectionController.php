@@ -10,11 +10,30 @@ use App\Area;
 class CollectionController extends Controller
 {
     /**
-     * Display a listing of all collections
+     * Display a listing of collections (role-based access)
      */
     public function index()
     {
-        $collections = Collection::with(['area', 'user'])->orderBy('collection_date', 'asc')->get();
+        $user = auth()->user();
+        
+        // Get collections based on user role
+        if ($user->isAdmin()) {
+            $collections = Collection::with(['area', 'user'])->orderBy('collection_date', 'asc')->get();
+        } elseif ($user->isWorker()) {
+            // Workers can only see collections in their assigned areas
+            $areaIds = $user->getManageableAreaIds();
+            $collections = Collection::with(['area', 'user'])
+                ->whereIn('area_id', $areaIds)
+                ->orderBy('collection_date', 'asc')
+                ->get();
+        } else {
+            // Customers can only see their own collections
+            $collections = Collection::with(['area'])
+                ->where('customer_email', $user->email)
+                ->orderBy('collection_date', 'asc')
+                ->get();
+        }
+        
         return view('collections.index', compact('collections'));
     }
 
@@ -67,7 +86,17 @@ class CollectionController extends Controller
             'collection_date' => 'required|date|after_or_equal:today',
             'collection_time' => 'nullable|date_format:H:i',
             'notes' => 'nullable|string|max:1000',
+            'is_recurring' => 'nullable|boolean',
         ]);
+
+        $user = auth()->user();
+        
+        // Customers can only create collections for their own email
+        if ($user->isCustomer() && $validated['customer_email'] !== $user->email) {
+            return back()->withInput()->with('error', 
+                'You can only create collections for your own email address.'
+            );
+        }
 
         // Check if address is within allowed areas
         $address = $validated['address'];
@@ -84,12 +113,18 @@ class CollectionController extends Controller
         // Create the collection
         $collection = Collection::create(array_merge($validated, [
             'status' => Collection::STATUS_PENDING,
-            'user_id' => auth()->id(),
+            'user_id' => $user->id,
             'area_id' => $area->id,
+            'is_recurring' => $request->has('is_recurring') ? true : false,
         ]));
         
-        return redirect()->route('collections.index')
-            ->with('success', 'Collection booked successfully!');
+        $message = 'Collection booked successfully!';
+        if ($collection->is_recurring) {
+            $message .= ' This is a recurring collection - a new booking will be automatically created every 2 weeks.';
+        }
+        
+        return redirect()->route('collections.manage')
+            ->with('success', $message);
     }
 
     /**
@@ -198,6 +233,13 @@ class CollectionController extends Controller
             'status' => 'required|in:pending,confirmed,collected,cancelled',
             'notes' => 'nullable|string|max:1000',
         ]);
+
+        // Customers can only update collections with their own email
+        if ($user->isCustomer() && $validated['customer_email'] !== $user->email) {
+            return back()->withInput()->with('error', 
+                'You can only modify collections for your own email address.'
+            );
+        }
 
         // Update the collection
         $collection->update($validated);

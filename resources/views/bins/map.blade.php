@@ -6,8 +6,7 @@
     <title>Bin Collections Map</title>
     <link href="https://cdn.jsdelivr.net/npm/@picocss/pico@2/css/pico.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
-    <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.css" />
-    <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.Default.css" />
+
     <style>
         body { max-width: 1200px; margin: 1rem auto; }
         #map { height: 700px; border-radius: 8px; }
@@ -43,11 +42,31 @@
             margin: 8px 0;
         }
         
-        /* Improve cluster icons */
-        .marker-cluster {
-            border-radius: 50%;
+
+        
+        /* Collection icons */
+        .collection-icon {
+            cursor: pointer;
+            background: none !important;
+            border: none !important;
         }
         
+        .collection-icon div {
+            transition: transform 0.2s ease;
+        }
+        
+        .collection-icon:hover div {
+            transform: scale(1.1);
+        }
+
+        /* Hide default Leaflet marker styles for our custom icons */
+        .leaflet-marker-icon.collection-icon {
+            background-image: none !important;
+            background-color: transparent !important;
+            border: none !important;
+            box-shadow: none !important;
+        }
+
         /* Info panel */
         .map-info {
             background: #f8f9fa;
@@ -289,13 +308,13 @@
 <main>
     <div class="grid">
         <div>
-            <div class="legend"><span class="dot" style="background:#28a745"></span> Food</div>
-            <div class="legend"><span class="dot" style="background:#007bff"></span> Recycling</div>
-            <div class="legend"><span class="dot" style="background:#8b4513"></span> Garden</div>
+            <div class="legend"><span class="dot" style="background:#28a745"></span> Food (Green)</div>
+            <div class="legend"><span class="dot" style="background:#007bff"></span> Recycling (Blue)</div>
+            <div class="legend"><span class="dot" style="background:#8b4513"></span> Garden (Brown)</div>
         </div>
         <div class="muted">
-            Use the layer controls in the top-right to toggle different bin types and allowed areas. 
-            Each area has its own supported bin types. Default types are Food (green), Recycling (blue), and Garden (brown).
+            Collection points show as colored circles with house numbers. Use the layer controls in the top-right to toggle different bin types and allowed areas. 
+            Each circle color represents the bin type: Green for Food waste, Blue for Recycling, Brown for Garden waste.
         </div>
     </div>
     
@@ -413,7 +432,7 @@
 </main>
 
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
-<script src="https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js"></script>
+
 <script>
     const colorFor = (type) => {
         const colors = {
@@ -431,9 +450,45 @@
         return colors[type] || '#6c757d'; // Default to gray
     };
 
-    function dotIcon(color){
-        const html = `<span style="display:inline-block;width:14px;height:14px;border-radius:50%;background:${color};border:2px solid #fff;box-shadow:0 0 0 1px rgba(0,0,0,.25);"></span>`;
-        return L.divIcon({ html, className: 'bin-dot', iconSize: [18, 18], iconAnchor: [9, 9], popupAnchor: [0, -9] });
+    function extractHouseNumber(address) {
+        // Extract house number from address - looks for number at start of address
+        const match = address.match(/^(\d+[a-z]?)/i);
+        return match ? match[1] : '?';
+    }
+
+    function createCollectionIcon(binType, address) {
+        const color = colorFor(binType);
+        const houseNumber = extractHouseNumber(address);
+        
+
+        
+        // Create a circle with house number inside
+        const html = `
+            <div style="
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                width: 24px;
+                height: 24px;
+                border-radius: 50%;
+                background-color: ${color};
+                color: white;
+                font-size: 10px;
+                font-weight: bold;
+                border: 2px solid white;
+                box-shadow: 0 0 0 1px rgba(0,0,0,0.3);
+                font-family: Arial, sans-serif;
+            ">${houseNumber}</div>
+        `;
+        
+        return L.divIcon({ 
+            html, 
+            className: 'collection-icon', 
+            iconSize: [24, 24], 
+            iconAnchor: [12, 12], 
+            popupAnchor: [0, -12],
+            bgPos: [0, 0] // This prevents the default icon background
+        });
     }
 
     let allBinsData = []; // Store all bins data for filtering
@@ -458,22 +513,11 @@
         
         binTypes.forEach(binType => {
             const binItems = items.filter(i => i.bin_type === binType);
-            const cluster = L.markerClusterGroup({ 
-                showCoverageOnHover: false, 
-                spiderfyOnEveryZoom: true,
-                iconCreateFunction: function(cluster) {
-                    const color = colorFor(binType);
-                    return new L.DivIcon({
-                        html: `<div style="background-color: ${color}; color: white; border-radius: 50%; width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; font-weight: bold; border: 2px solid white; box-shadow: 0 0 0 1px rgba(0,0,0,0.3);">${cluster.getChildCount()}</div>`,
-                        className: 'marker-cluster',
-                        iconSize: new L.Point(40, 40)
-                    });
-                }
-            });
+            const layerGroup = L.layerGroup();
             
             binItems.forEach(i => {
                 const marker = L.marker([i.latitude, i.longitude], { 
-                    icon: dotIcon(i.color),
+                    icon: createCollectionIcon(i.bin_type, i.address),
                     title: `${i.bin_type} @ ${i.address}` 
                 });
                 marker.bindPopup(`
@@ -486,10 +530,10 @@
                     <strong>Status:</strong> <span style="color: ${i.status === 'Completed' ? 'green' : i.status === 'Pending' ? 'orange' : 'blue'}">${i.status}</span><br>
                     ${i.notes ? `<strong>Notes:</strong> ${i.notes}` : ''}
                 `);
-                cluster.addLayer(marker);
+                layerGroup.addLayer(marker);
             });
             
-            layers[`${binType} (${binItems.length})`] = cluster;
+            layers[`${binType} (${binItems.length})`] = layerGroup;
         });
         
         return layers;
@@ -579,8 +623,8 @@
         if(binsData.length > 0){
             // Get bounds from all bin markers
             const allMarkers = [];
-            Object.values(binTypeLayers).forEach(cluster => {
-                cluster.eachLayer(marker => allMarkers.push(marker));
+            Object.values(binTypeLayers).forEach(layerGroup => {
+                layerGroup.eachLayer(marker => allMarkers.push(marker));
             });
             
             if (allMarkers.length > 0) {
@@ -725,8 +769,8 @@
         // Fit map to filtered data if there is any
         if (filteredData.length > 0) {
             const allMarkers = [];
-            Object.values(binTypeLayers).forEach(cluster => {
-                cluster.eachLayer(marker => allMarkers.push(marker));
+            Object.values(binTypeLayers).forEach(layerGroup => {
+                layerGroup.eachLayer(marker => allMarkers.push(marker));
             });
             
             if (allMarkers.length > 0) {
@@ -822,8 +866,8 @@
         if(binsData.length > 0){
             // Get bounds from all bin markers
             const allMarkers = [];
-            Object.values(binTypeLayers).forEach(cluster => {
-                cluster.eachLayer(marker => allMarkers.push(marker));
+            Object.values(binTypeLayers).forEach(layerGroup => {
+                layerGroup.eachLayer(marker => allMarkers.push(marker));
             });
 
             if (allMarkers.length > 0) {

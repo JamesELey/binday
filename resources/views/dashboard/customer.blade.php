@@ -180,8 +180,8 @@
     <nav class="navbar">
         <div class="nav-links">
             <a href="{{ route('bins.index') }}">🏠 Home</a>
-            <a href="{{ route('bins.map') }}">🗺️ Map</a>
-            <a href="{{ route('collections.index') }}">📅 My Collections</a>
+            <a href="{{ route('collections.create') }}">➕ Book Collection</a>
+            <a href="{{ route('collections.manage') }}">📅 My Collections</a>
         </div>
         
         <form method="POST" action="{{ route('logout') }}" class="logout-form">
@@ -209,19 +209,19 @@
                 </div>
                 <div class="action-buttons">
                     <a href="{{ route('collections.create') }}" class="btn btn-success">➕ Book New Collection</a>
-                    <a href="{{ route('collections.index') }}" class="btn btn-primary">📋 View My Collections</a>
-                    <a href="#" class="btn btn-info">📊 Collection History</a>
+                    <a href="{{ route('collections.manage') }}" class="btn btn-primary">📋 My Collections</a>
+                    <a href="{{ route('enquiry.create') }}" class="btn btn-info">💬 Contact Support</a>
                 </div>
             </div>
             
             <div class="card">
                 <div class="card-header">
-                    <span class="card-icon">🗺️</span>
-                    <h3 class="card-title">Service Areas</h3>
+                    <span class="card-icon">❓</span>
+                    <h3 class="card-title">Help & Support</h3>
                 </div>
                 <div class="action-buttons">
-                    <a href="{{ route('bins.map') }}" class="btn btn-primary">🗺️ View Coverage Map</a>
-                    <a href="{{ route('areas.index') }}" class="btn btn-info">🏘️ Service Areas</a>
+                    <a href="{{ route('enquiry.create') }}" class="btn btn-primary">❓ Ask a Question</a>
+                    <a href="mailto:enquiries@thebinday.co.uk" class="btn btn-info">📧 Email Support</a>
                 </div>
             </div>
             

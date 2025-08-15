@@ -34,14 +34,29 @@ class BinScheduleController extends Controller
     }
 
     /**
-     * API endpoint to get all bins data
+     * API endpoint to get bins data (role-based access)
      */
     public function apiAll(): JsonResponse
     {
-        // Load collections from database
-        $collections = Collection::with('area')->get();
-        $bins = [];
+        $user = auth()->user();
         
+        // Get collections based on user role
+        if ($user->isAdmin()) {
+            $collections = Collection::with('area')->get();
+        } elseif ($user->isWorker()) {
+            // Workers can only see collections in their assigned areas
+            $areaIds = $user->getManageableAreaIds();
+            $collections = Collection::with('area')
+                ->whereIn('area_id', $areaIds)
+                ->get();
+        } else {
+            // Customers can only see their own collections
+            $collections = Collection::with('area')
+                ->where('customer_email', $user->email)
+                ->get();
+        }
+        
+        $bins = [];
         foreach ($collections as $collection) {
             $bins[] = [
                 'id' => $collection->id,

@@ -12,7 +12,12 @@ class Kernel extends ConsoleKernel
      */
     protected function schedule(Schedule $schedule): void
     {
-        // $schedule->command('inspire')->hourly();
+        // Generate recurring collections daily at midnight
+        $schedule->command('collections:generate-recurring')
+                 ->daily()
+                 ->at('00:00')
+                 ->withoutOverlapping()
+                 ->appendOutputTo(storage_path('logs/recurring-collections.log'));
     }
 
     /**
