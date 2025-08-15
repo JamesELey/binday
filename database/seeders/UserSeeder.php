@@ -53,6 +53,72 @@ class UserSeeder extends Seeder
             ]
         );
 
+        // Create additional dummy customer users to spread collections among
+        $dummyCustomers = [
+            [
+                'name' => 'Alice Smith',
+                'email' => 'alice.smith@gmail.com',
+                'phone' => '01785 456789',
+                'address' => '45 Castle Street, Eccleshall, ST21 6DF',
+            ],
+            [
+                'name' => 'Bob Johnson',
+                'email' => 'bob.johnson@yahoo.com',
+                'phone' => '01785 567890',
+                'address' => '78 Mill Lane, Eccleshall, ST21 6EH',
+            ],
+            [
+                'name' => 'Carol Wilson',
+                'email' => 'carol.wilson@hotmail.com',
+                'phone' => '01785 678901',
+                'address' => '12 Victoria Road, Stafford, ST16 2BB',
+            ],
+            [
+                'name' => 'David Brown',
+                'email' => 'david.brown@outlook.com',
+                'phone' => '01785 789012',
+                'address' => '89 Queen Street, Eccleshall, ST21 6FG',
+            ],
+            [
+                'name' => 'Emma Davis',
+                'email' => 'emma.davis@btinternet.com',
+                'phone' => '01785 890123',
+                'address' => '56 Park Road, Stafford, ST16 2CC',
+            ],
+            [
+                'name' => 'Frank Miller',
+                'email' => 'frank.miller@gmail.com',
+                'phone' => '01785 901234',
+                'address' => '34 Church Lane, Eccleshall, ST21 6HJ',
+            ],
+            [
+                'name' => 'Grace Taylor',
+                'email' => 'grace.taylor@yahoo.com',
+                'phone' => '01785 012345',
+                'address' => '67 High Street, Stafford, ST16 2DD',
+            ],
+            [
+                'name' => 'Henry Anderson',
+                'email' => 'henry.anderson@gmail.com',
+                'phone' => '01785 123457',
+                'address' => '23 Oak Avenue, Eccleshall, ST21 6JK',
+            ]
+        ];
+
+        foreach ($dummyCustomers as $customer) {
+            User::firstOrCreate(
+                ['email' => $customer['email']],
+                [
+                    'name' => $customer['name'],
+                    'password' => 'password123',
+                    'role' => 'customer',
+                    'active' => true,
+                    'phone' => $customer['phone'],
+                    'address' => $customer['address'],
+                ]
+            );
+        }
+
         // Create additional demo users
         $demoUsers = [
             [

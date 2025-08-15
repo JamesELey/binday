@@ -102,9 +102,11 @@
         
         <div class="nav-links">
             <a href="{{ route('bins.index') }}">🏠 Home</a>
-            <a href="{{ route('collections.index') }}">📋 View All Collections</a>
-            <a href="{{ route('collections.manage') }}" style="background: #ffc107; color: #212529;">✏️ Edit Collections</a>
-            <a href="{{ route('bins.map') }}">🗺️ View Map</a>
+            @if(auth()->user() && (auth()->user()->isAdmin() || auth()->user()->isWorker()))
+                <a href="{{ route('collections.index') }}">📋 View All Collections</a>
+                <a href="{{ route('bins.map') }}">🗺️ View Map</a>
+            @endif
+            <a href="{{ route('collections.manage') }}" style="background: #ffc107; color: #212529;">✏️ My Collections</a>
         </div>
     </div>
 
@@ -148,12 +150,25 @@
             <div class="form-row">
                 <div class="form-group">
                     <label for="customer_name">Customer Name <span class="required">*</span></label>
-                    <input type="text" id="customer_name" name="customer_name" value="{{ old('customer_name') }}" required>
+                    <input type="text" id="customer_name" name="customer_name" value="{{ old('customer_name', auth()->user()->name ?? '') }}" required>
                 </div>
                 <div class="form-group">
-                    <label for="phone">Phone Number <span class="required">*</span></label>
-                    <input type="tel" id="phone" name="phone" value="{{ old('phone') }}" placeholder="e.g., 07123456789" required>
+                    <label for="customer_email">Customer Email <span class="required">*</span></label>
+                    <input type="email" id="customer_email" name="customer_email" 
+                           value="{{ old('customer_email', auth()->user()->email ?? '') }}" 
+                           @if(auth()->user() && auth()->user()->isCustomer()) readonly @endif 
+                           placeholder="e.g., john@example.com" required>
+                    @if(auth()->user() && auth()->user()->isCustomer())
+                        <small style="color: #666; font-size: 14px; margin-top: 5px; display: block;">
+                            This field is read-only as you can only book collections for your own email.
+                        </small>
+                    @endif
                 </div>
+            </div>
+            
+            <div class="form-group">
+                <label for="phone">Phone Number <span class="required">*</span></label>
+                <input type="tel" id="phone" name="phone" value="{{ old('phone') }}" placeholder="e.g., 07123456789" required>
             </div>
 
             <div class="form-group">
@@ -239,8 +254,20 @@
             </div>
 
             <div class="form-group">
+                <label for="is_recurring" style="display: flex; align-items: center; gap: 10px; cursor: pointer;">
+                    <input type="checkbox" id="is_recurring" name="is_recurring" value="1" 
+                           {{ old('is_recurring') ? 'checked' : '' }}
+                           style="width: auto; margin: 0;">
+                    <span>🔄 Make this a recurring collection (every 2 weeks)</span>
+                </label>
+                <small style="color: #666; font-size: 14px; margin-top: 8px; display: block;">
+                    If checked, a new collection will be automatically scheduled every 2 weeks on the same day of the week.
+                </small>
+            </div>
+
+            <div class="form-group">
                 <label for="notes">Special Instructions</label>
-                <textarea id="notes" name="notes" placeholder="Any special instructions for the collection team (e.g., bin location, access requirements, etc.)"></textarea>
+                <textarea id="notes" name="notes" placeholder="Any special instructions for the collection team (e.g., bin location, access requirements, etc.)">{{ old('notes') }}</textarea>
             </div>
 
             <button type="submit" class="submit-btn">📋 Book Collection</button>

@@ -12,14 +12,25 @@
                 <a href="{{ route('bins.index') }}" style="text-decoration: none; color: #6c757d; padding: 5px 10px; border-radius: 4px; transition: all 0.3s;">
                     🏠 Home
                 </a>
-                <a href="{{ url('/bins/map') }}" style="text-decoration: none; color: #6c757d; padding: 5px 10px; border-radius: 4px; transition: all 0.3s;">
-                    🗺️ Map
-                </a>
                 
                 @auth
-                    <a href="{{ url('/collections') }}" style="text-decoration: none; color: #6c757d; padding: 5px 10px; border-radius: 4px; transition: all 0.3s;">
-                        📋 Collections
-                    </a>
+                    @if(auth()->user()->isAdmin() || auth()->user()->isWorker())
+                        <a href="{{ url('/bins/map') }}" style="text-decoration: none; color: #6c757d; padding: 5px 10px; border-radius: 4px; transition: all 0.3s;">
+                            🗺️ Map
+                        </a>
+                        <a href="{{ url('/collections') }}" style="text-decoration: none; color: #6c757d; padding: 5px 10px; border-radius: 4px; transition: all 0.3s;">
+                            📋 All Collections
+                        </a>
+                        <a href="{{ url('/routes') }}" style="text-decoration: none; color: #fd7e14; padding: 5px 10px; border-radius: 4px; transition: all 0.3s;">
+                            🚛 Routes
+                        </a>
+                    @endif
+                    
+                    @if(auth()->user()->isCustomer())
+                        <a href="{{ route('collections.create') }}" style="text-decoration: none; color: #28a745; padding: 5px 10px; border-radius: 4px; transition: all 0.3s;">
+                            ➕ New Collection
+                        </a>
+                    @endif
                     
                     @if(auth()->user()->isAdmin())
                         <a href="{{ url('/admin/seed') }}" style="text-decoration: none; color: #dc3545; padding: 5px 10px; border-radius: 4px; transition: all 0.3s;">
@@ -34,7 +45,11 @@
                     @endif
                     
                     <a href="{{ route('collections.manage') }}" style="text-decoration: none; color: #28a745; padding: 5px 10px; border-radius: 4px; transition: all 0.3s;">
-                        📊 Manage
+                        @if(auth()->user()->isCustomer())
+                            📊 My Collections
+                        @else
+                            📊 Manage Collections
+                        @endif
                     </a>
                 @else
                     <span style="color: #6c757d; font-style: italic; padding: 5px 10px;">
